@@ -4,26 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#ffffff">
     <title>드론 촬영지 관리</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        /* 🔥 키보드 유령 공간 버그 해결: 100dvh 사용 및 배경색 흰색 통일 */
+        /* 🔥 빈틈이 생겨도 무조건 흰색이 나오도록 강제 지정 */
         html, body { 
-            margin: 0; padding: 0; width: 100%; 
-            height: 100dvh; /* 키보드 높이 변화를 완벽하게 실시간 추적 */
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden; font-family: -apple-system, sans-serif; 
-            background-color: white; /* 회색 바탕을 지워버림 */
+            background-color: #ffffff; /* 완전히 하얀색으로 덮음 */
             display: flex; flex-direction: column;
         }
 
         #map { flex: 1; min-height: 0; width: 100%; z-index: 1; border-bottom: 1px solid #ccc; position: relative; }
         
         .container { 
-            flex: none; width: 100%; background: white; 
-            /* 진짜 '최소한'의 안전 여백만 남김 */
-            padding: 15px 15px calc(10px + env(safe-area-inset-bottom)) 15px; 
+            flex: none; width: 100%; background-color: #ffffff; 
+            padding: 15px 15px calc(15px + env(safe-area-inset-bottom)) 15px; 
             box-sizing: border-box; z-index: 2; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         }
         
