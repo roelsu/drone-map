@@ -16,10 +16,8 @@
             touch-action: none; background-color: white;
         }
         
-        /* 🔥 지도를 60%로 크게 확대 */
         #map { height: 60dvh; width: 100%; border-bottom: 1px solid #ccc; touch-action: auto; }
         
-        /* 🔥 하단 입력창을 40%로 축소하고 여백 조정 */
         .container { 
             height: 40dvh; background: white; padding: 15px; 
             box-sizing: border-box; overflow: hidden; 
@@ -38,10 +36,11 @@
         .btn-apply { background-color: #007aff; color: white; }
         .btn-clear { background-color: #f2f2f7; color: #ff3b30; } 
 
+        /* 🔥 상태창 스타일 수정 (empty일 때는 아예 숨김) */
         .status { margin-top: 10px; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 15px; }
-        .valid { background-color: #d4edda; color: #155724; }
-        .expired { background-color: #f8d7da; color: #721c24; }
-        .empty { background-color: #e9ecef; color: #495057; }
+        .valid { background-color: #d4edda; color: #155724; display: block; }
+        .expired { background-color: #f8d7da; color: #721c24; display: block; }
+        .empty { display: none; } /* 입력 전이나 지웠을 때는 화면에서 아예 사라짐 */
         
         .my-location-dot {
             width: 12px; height: 12px; background-color: #007aff;
@@ -82,7 +81,7 @@
             <button class="btn-apply" onclick="updateMap()">지도에 적용</button>
         </div>
 
-        <div id="statusBox" class="status empty">정보를 입력해주세요</div>
+        <div id="statusBox" class="status empty"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -154,9 +153,10 @@
             document.getElementById('radius').value = '500'; 
             document.getElementById('expiry').value = '';
             
+            // 🔥 지우기를 누르면 다시 박스를 숨김
             var statusBox = document.getElementById('statusBox');
             statusBox.className = "status empty";
-            statusBox.innerHTML = "정보를 입력해주세요";
+            statusBox.innerHTML = "";
         }
     </script>
 </body>
