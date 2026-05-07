@@ -14,12 +14,16 @@
             overflow: hidden; margin: 0; padding: 0; 
             font-family: -apple-system, sans-serif; 
             touch-action: none; background-color: white;
+            display: flex; flex-direction: column; /* 🔥 전체를 세로로 정렬 */
         }
         
-        #map { height: 60dvh; width: 100%; border-bottom: 1px solid #ccc; touch-action: auto; }
+        /* 🔥 지도가 남는 공간을 100% 꽉 채우도록 설정 (flex: 1) */
+        #map { flex: 1; width: 100%; border-bottom: 1px solid #ccc; touch-action: auto; }
         
+        /* 🔥 하단 입력창은 딱 안의 내용물 크기만큼만 공간을 차지함 (flex: none) */
         .container { 
-            height: 40dvh; background: white; padding: 15px; 
+            flex: none; background: white; 
+            padding: 15px 15px 25px 15px; /* 아이폰 하단 여백을 위해 아래쪽 패딩을 조금 더 줌 */
             box-sizing: border-box; overflow: hidden; 
         }
         
@@ -28,25 +32,24 @@
         .form-group { margin-bottom: 10px; }
 
         label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #666; }
-        input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        /* 🔥 유효기간의 회색 배경을 없애고 모든 입력칸을 흰색으로 통일 */
+        input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; background-color: white; }
         input[type="number"], input[type="date"] { font-size: 16px; } 
 
         .button-group { display: flex; gap: 10px; margin-top: 5px; }
         button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-apply { background-color: #007aff; color: white; }
         .btn-clear { background-color: #f2f2f7; color: #ff3b30; } 
-
-        /* 🔥 상태창 스타일 수정 (empty일 때는 아예 숨김) */
-        .status { margin-top: 10px; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 15px; }
-        .valid { background-color: #d4edda; color: #155724; display: block; }
-        .expired { background-color: #f8d7da; color: #721c24; display: block; }
-        .empty { display: none; } /* 입력 전이나 지웠을 때는 화면에서 아예 사라짐 */
         
         .my-location-dot {
             width: 12px; height: 12px; background-color: #007aff;
             border: 2px solid white; border-radius: 50%;
             box-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
+
+        /* 🔥 날짜 옆에 붙을 D-Day 텍스트 스타일 */
+        .date-status { font-size: 13px; font-weight: bold; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -71,7 +74,7 @@
                 <input type="number" id="radius" value="500">
             </div>
             <div class="form-group">
-                <label>유효기간 종료일</label>
+                <label>유효기간 종료일 <span id="dateStatus" class="date-status"></span></label>
                 <input type="date" id="expiry">
             </div>
         </div>
@@ -80,8 +83,6 @@
             <button class="btn-clear" onclick="clearMap()">지우기</button>
             <button class="btn-apply" onclick="updateMap()">지도에 적용</button>
         </div>
-
-        <div id="statusBox" class="status empty"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -126,18 +127,34 @@
 
             map.flyTo([lat, lng], 14);
 
+            // 🔥 날짜 색상 변경 로직
             if(expiryDate) {
                 var today = new Date();
                 today.setHours(0,0,0,0);
                 var selectedDate = new Date(expiryDate);
-                var statusBox = document.getElementById('statusBox');
                 
-                if(selectedDate >= today) {
-                    statusBox.className = "status valid";
-                    statusBox.innerHTML = "✅ 비행 승인 기간 (사용 가능)";
+                var diffTime = selectedDate - today;
+                var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                var dateStatus = document.getElementById('dateStatus');
+                var expiryInput = document.getElementById('expiry');
+                
+                if (diffDays < 0) {
+                    dateStatus.innerHTML = "(만료됨)";
+                    dateStatus.style.color = "#ff3b30";
+                    expiryInput.style.color = "#ff3b30";
+                } else if (diffDays <= 3) {
+                    dateStatus.innerHTML = "(D-" + diffDays + ")";
+                    dateStatus.style.color = "#ff3b30"; // 3일 이하: 빨간색
+                    expiryInput.style.color = "#ff3b30";
+                } else if (diffDays <= 15) {
+                    dateStatus.innerHTML = "(D-" + diffDays + ")";
+                    dateStatus.style.color = "#007aff"; // 15일 이하: 파란색
+                    expiryInput.style.color = "#007aff";
                 } else {
-                    statusBox.className = "status expired";
-                    statusBox.innerHTML = "❌ 기간 만료 (비행 불가)";
+                    dateStatus.innerHTML = "(D-" + diffDays + ")";
+                    dateStatus.style.color = "#333"; // 넉넉할 때: 기본 검정색
+                    expiryInput.style.color = "#333";
                 }
             }
         }
@@ -151,12 +168,12 @@
             document.getElementById('lat').value = '';
             document.getElementById('lng').value = '';
             document.getElementById('radius').value = '500'; 
-            document.getElementById('expiry').value = '';
             
-            // 🔥 지우기를 누르면 다시 박스를 숨김
-            var statusBox = document.getElementById('statusBox');
-            statusBox.className = "status empty";
-            statusBox.innerHTML = "";
+            var expiryInput = document.getElementById('expiry');
+            expiryInput.value = '';
+            expiryInput.style.color = 'black'; // 색상 원래대로
+            
+            document.getElementById('dateStatus').innerHTML = ""; // 상태 글씨 지우기
         }
     </script>
 </body>
