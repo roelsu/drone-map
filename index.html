@@ -5,70 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>드론 비행 지도</title>
+    <title>드론 촬영지 관리</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        /* 껍데기 삭제하고, 다시 Body 자체를 고정 플렉스 박스로 만듭니다 */
         html, body { 
-            margin: 0; padding: 0; 
-            width: 100%; height: 100%; 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            overflow: hidden; 
-            font-family: -apple-system, sans-serif; 
-            background-color: white;
-            display: flex;
-            flex-direction: column;
+            margin: 0; padding: 0; width: 100%; height: 100dvh; 
+            overflow: hidden; font-family: -apple-system, sans-serif; 
+            background-color: #f2f2f7; display: flex; flex-direction: column;
         }
 
-        /* 지도는 무조건 남는 공간 전부(flex: 1)를 차지합니다 */
-        #map { 
-            flex: 1; 
-            min-height: 0; /* 사파리에서 지도가 사라지는 걸 막는 핵심 방어막 */
-            width: 100%; 
-            border-bottom: 1px solid #ccc;
-            z-index: 1;
-        }
+        #map { flex: 1; min-height: 0; width: 100%; z-index: 1; border-bottom: 1px solid #ccc; }
         
-        /* 입력창은 내부 높이만큼만 유지하고 바닥에 붙습니다 */
         .container { 
-            flex: none; 
-            width: 100%; 
-            background: white; 
+            flex: none; background: white; 
             padding: 15px 15px calc(15px + env(safe-area-inset-bottom)) 15px; 
-            box-sizing: border-box; 
-            z-index: 2;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box; z-index: 2;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         }
         
-        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .form-row .form-group { margin-bottom: 0; flex: 1; }
-        .form-group { margin-bottom: 10px; }
-
-        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #666; }
-        
+        .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .form-row .form-group { flex: 1; }
+        label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 3px; color: #8e8e93; }
         input { 
-            width: 100%; height: 42px; line-height: 42px; 
-            padding: 0 10px; margin: 0; font-size: 16px; 
-            border: 1px solid #ddd; border-radius: 8px; 
-            box-sizing: border-box; background-color: white; 
-            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 38px; padding: 0 10px; font-size: 15px; 
+            border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; 
+            background-color: #f9f9f9; -webkit-appearance: none;
         }
 
-        input[type="date"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+        .button-group { display: flex; gap: 8px; margin-top: 5px; }
+        button { flex: 1; height: 44px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-add { background-color: #007aff; color: white; }
+        .btn-reset { background-color: #ff3b30; color: white; flex: 0.3; }
 
-        .button-group { display: flex; gap: 10px; margin-top: 5px; }
-        button { flex: 1; height: 46px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .btn-apply { background-color: #007aff; color: white; }
-        .btn-clear { background-color: #f2f2f7; color: #ff3b30; } 
+        /* 🔥 촬영지 리스트 스타일 */
+        #location-list { 
+            margin-top: 12px; max-height: 120px; overflow-y: auto; 
+            border-top: 1px inset #eee; padding-top: 10px;
+        }
+        .location-item { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px; border-radius: 8px; background: #f8f8f8; margin-bottom: 6px; font-size: 13px;
+        }
+        .item-info { display: flex; flex-direction: column; gap: 2px; }
+        .item-dday { font-weight: bold; }
+        .btn-delete { background: none; color: #ff3b30; font-size: 18px; width: auto; height: auto; padding: 0 5px; }
         
         .my-location-dot {
             width: 12px; height: 12px; background-color: #007aff;
             border: 2px solid white; border-radius: 50%;
             box-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
-
-        .date-dday { font-size: 13px; font-weight: bold; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -77,142 +64,119 @@
     
     <div class="container">
         <div class="form-row">
-            <div class="form-group">
-                <label>위도 (Lat)</label>
-                <input type="text" id="lat" value="37.5665" placeholder="예: 37° 24′ 40″ N">
-            </div>
-            <div class="form-group">
-                <label>경도 (Lng)</label>
-                <input type="text" id="lng" value="126.9780" placeholder="예: 126° 55′ 49″ E">
-            </div>
+            <div class="form-group"><label>위도</label><input type="text" id="lat" placeholder="좌표 복붙"></div>
+            <div class="form-group"><label>경도</label><input type="text" id="lng" placeholder="좌표 복붙"></div>
         </div>
-        
         <div class="form-row">
-            <div class="form-group">
-                <label>반경 (m)</label>
-                <input type="number" id="radius" value="500">
-            </div>
-            <div class="form-group">
-                <label>유효기간 종료일 <span id="dateDDay" class="date-dday"></span></label>
-                <input type="date" id="expiry">
-            </div>
+            <div class="form-group"><label>반경(m)</label><input type="number" id="radius" value="500"></div>
+            <div class="form-group"><label>만료일</label><input type="date" id="expiry"></div>
         </div>
         
         <div class="button-group">
-            <button class="btn-clear" onclick="clearMap()">지우기</button>
-            <button class="btn-apply" onclick="updateMap()">지도에 적용</button>
+            <button class="btn-add" onclick="addNewLocation()">촬영지 추가</button>
+            <button class="btn-reset" onclick="resetAll()">초기화</button>
         </div>
+
+        <div id="location-list"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        document.querySelector('.container').addEventListener('touchstart', function(e) {
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-                document.activeElement.blur();
-            }
-        });
-
-        var map = L.map('map', { zoomControl: false }).setView([37.5665, 126.9780], 14);
+        var map = L.map('map', { zoomControl: false }).setView([37.5665, 126.9780], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        setTimeout(function() { map.invalidateSize(); }, 300);
-
-        var droneCircle;
+        var locations = JSON.parse(localStorage.getItem('drone_locs')) || [];
+        var circleLayers = [];
         var myLocationMarker;
 
-        map.locate({ setView: true, maxZoom: 15, watch: true });
+        // 초기 로드 시 실행
+        window.onload = function() {
+            renderAll();
+            map.locate({ setView: true, maxZoom: 14, watch: true });
+        };
 
-        function onLocationFound(e) {
+        map.on('locationfound', function(e) {
             if (myLocationMarker) map.removeLayer(myLocationMarker);
-            var locationIcon = L.divIcon({ className: 'my-location-dot' });
-            myLocationMarker = L.marker(e.latlng, { icon: locationIcon }).addTo(map);
-        }
-        map.on('locationfound', onLocationFound);
+            myLocationMarker = L.marker(e.latlng, { icon: L.divIcon({ className: 'my-location-dot' }) }).addTo(map);
+        });
 
-        // 도/분/초 -> 소수점 좌표 자동 변환 함수
-        function parseCoordinate(inputStr) {
-            if (!inputStr) return NaN;
-            var matches = inputStr.match(/\d+(\.\d+)?/g);
-            if (!matches) return NaN;
-
-            var val = 0;
-            if (matches.length >= 3) {
-                val = parseFloat(matches[0]) + (parseFloat(matches[1]) / 60) + (parseFloat(matches[2]) / 3600);
-            } else if (matches.length === 2) {
-                val = parseFloat(matches[0]) + (parseFloat(matches[1]) / 60);
-            } else if (matches.length === 1) {
-                val = parseFloat(matches[0]);
-            }
-
-            if (/[swSW남서]/.test(inputStr)) val = -val;
-            return val;
+        function parseCoordinate(str) {
+            if (!str) return NaN;
+            var m = str.match(/\d+(\.\d+)?/g);
+            if (!m) return NaN;
+            var v = m.length >= 3 ? parseFloat(m[0]) + (m[1]/60) + (m[2]/3600) : (m.length == 2 ? parseFloat(m[0]) + (m[1]/60) : parseFloat(m[0]));
+            return /[swSW남서]/.test(str) ? -v : v;
         }
 
-        function updateMap() {
-            var lat = parseCoordinate(document.getElementById('lat').value);
-            var lng = parseCoordinate(document.getElementById('lng').value);
-            var radius = parseFloat(document.getElementById('radius').value);
-            var expiryDate = document.getElementById('expiry').value;
+        // 🔥 촬영지 추가 함수
+        function addNewLocation() {
+            var latVal = parseCoordinate(document.getElementById('lat').value);
+            var lngVal = parseCoordinate(document.getElementById('lng').value);
+            var radVal = parseFloat(document.getElementById('radius').value);
+            var expVal = document.getElementById('expiry').value;
 
-            if (isNaN(lat) || isNaN(lng) || isNaN(radius)) return alert("좌표와 반경을 올바르게 입력해주세요.");
+            if (isNaN(latVal) || isNaN(lngVal) || !expVal) return alert("좌표와 날짜를 입력해주세요.");
 
-            if (droneCircle) map.removeLayer(droneCircle);
-
-            droneCircle = L.circle([lat, lng], {
-                color: '#ff3b30',
-                fillColor: '#ff3b30',
-                fillOpacity: 0.2,
-                radius: radius
-            }).addTo(map);
-
-            map.flyTo([lat, lng], 14);
-
-            if(expiryDate) {
-                var today = new Date(); 
-                today.setHours(0,0,0,0);
-                var selectedDate = new Date(expiryDate);
-                
-                var diffTime = selectedDate - today;
-                var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                var dateDDay = document.getElementById('dateDDay');
-                var expiryInput = document.getElementById('expiry');
-                
-                if (diffDays < 0) {
-                    dateDDay.innerHTML = "(만료됨)";
-                    dateDDay.style.color = "#ff3b30";
-                    expiryInput.style.color = "#ff3b30"; 
-                } else if (diffDays <= 3) {
-                    dateDDay.innerHTML = "(D-" + diffDays + ")";
-                    dateDDay.style.color = "#ff3b30"; 
-                    expiryInput.style.color = "#ff3b30";
-                } else if (diffDays <= 15) {
-                    dateDDay.innerHTML = "(D-" + diffDays + ")";
-                    dateDDay.style.color = "#007aff"; 
-                    expiryInput.style.color = "#007aff";
-                } else {
-                    dateDDay.innerHTML = "(D-" + diffDays + ")";
-                    dateDDay.style.color = "#333"; 
-                    expiryInput.style.color = "#333";
-                }
-            }
-        }
-
-        function clearMap() {
-            if (droneCircle) {
-                map.removeLayer(droneCircle);
-                droneCircle = null;
-            }
+            var newLoc = { id: Date.now(), lat: latVal, lng: lngVal, radius: radVal, expiry: expVal };
+            locations.push(newLoc);
+            saveAndRender();
             
-            document.getElementById('lat').value = ''; 
+            // 입력창 비우기
+            document.getElementById('lat').value = '';
             document.getElementById('lng').value = '';
-            document.getElementById('radius').value = '500'; 
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('drone_locs', JSON.stringify(locations));
+            renderAll();
+        }
+
+        function renderAll() {
+            // 지도 초기화
+            circleLayers.forEach(layer => map.removeLayer(layer));
+            circleLayers = [];
             
-            var expiryInput = document.getElementById('expiry');
-            expiryInput.value = '';
-            expiryInput.style.color = 'black'; 
-            
-            document.getElementById('dateDDay').innerHTML = ""; 
+            var listHtml = "";
+            var today = new Date();
+            today.setHours(0,0,0,0);
+
+            locations.forEach((loc, index) => {
+                // 1. 지도에 원 그리기
+                var circle = L.circle([loc.lat, loc.lng], {
+                    color: '#ff3b30', fillColor: '#ff3b30', fillOpacity: 0.2, radius: loc.radius
+                }).addTo(map);
+                circleLayers.push(circle);
+
+                // 2. 리스트 아이템 만들기
+                var expDate = new Date(loc.expiry);
+                var diff = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+                var color = diff <= 3 ? "#ff3b30" : (diff <= 15 ? "#007aff" : "#333");
+                var dText = diff < 0 ? "만료" : "D-" + diff;
+
+                listHtml += `<div class="location-item">
+                    <div class="item-info">
+                        <strong>촬영지 ${index + 1} (${loc.radius}m)</strong>
+                        <span>${loc.expiry}</span>
+                    </div>
+                    <div class="item-dday" style="color: ${color}">${dText}</div>
+                    <button class="btn-delete" onclick="deleteLoc(${loc.id})">×</button>
+                </div>`;
+            });
+
+            document.getElementById('location-list').innerHTML = listHtml || "<p style='text-align:center;color:#999;font-size:12px;'>등록된 촬영지가 없습니다.</p>";
+            if (locations.length > 0) map.flyTo([locations[locations.length-1].lat, locations[locations.length-1].lng], 13);
+        }
+
+        function deleteLoc(id) {
+            locations = locations.filter(l => l.id !== id);
+            saveAndRender();
+        }
+
+        function resetAll() {
+            if(confirm("모든 촬영지 데이터를 삭제할까요?")) {
+                locations = [];
+                saveAndRender();
+            }
         }
     </script>
 </body>
