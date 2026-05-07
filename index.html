@@ -14,15 +14,15 @@
             overflow: hidden; margin: 0; padding: 0; 
             font-family: -apple-system, sans-serif; 
             touch-action: none; background-color: white;
-            display: flex; flex-direction: column; 
         }
         
-        #map { flex: 1; width: 100%; border-bottom: 1px solid #ccc; touch-action: auto; }
+        /* 🔥 지도 증발 버그 해결: 확실하게 60% 높이 할당 */
+        #map { height: 60dvh; width: 100%; border-bottom: 1px solid #ccc; touch-action: auto; }
         
+        /* 🔥 입력창은 나머지 40% 고정 */
         .container { 
-            flex: none; background: white; 
-            padding: 12px 15px 20px 15px; 
-            box-sizing: border-box; overflow: hidden; 
+            height: 40dvh; background: white; 
+            padding: 15px; box-sizing: border-box; overflow: hidden; 
         }
         
         .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
@@ -31,22 +31,30 @@
 
         label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #666; }
         
-        /* 🔥 모든 입력창 크기 완벽 일치 (아이폰 기본 스타일 강제 초기화) */
+        /* 🔥 유효기간 박스 크기 불일치 완벽 해결 (iOS 사파리 디자인 완전 무력화) */
         input { 
             width: 100%; 
-            height: 44px; /* 높이를 명확하게 고정 */
-            padding: 10px; 
+            height: 42px; /* 4개 박스 모두 절대 높이 42px로 강제 고정 */
+            line-height: 42px; /* 글씨를 세로 정중앙에 배치 */
+            padding: 0 10px; /* 위아래 여백 제거, 양옆만 10px */
+            margin: 0; /* 사파리 기본 마진 제거 */
             font-size: 16px; 
             border: 1px solid #ddd; 
             border-radius: 8px; 
             box-sizing: border-box; 
-            background-color: white;
-            -webkit-appearance: none; /* iOS 날짜 입력창 찌그러짐 방지 */
+            background-color: white; 
+            -webkit-appearance: none; /* 아이폰 기본 디자인 삭제 */
             appearance: none;
         }
 
+        /* 날짜 입력칸 내부 텍스트 정렬 오류 수정 */
+        input[type="date"]::-webkit-date-and-time-value {
+            text-align: left;
+            margin: 0;
+        }
+
         .button-group { display: flex; gap: 10px; margin-top: 5px; }
-        button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button { flex: 1; height: 46px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-apply { background-color: #007aff; color: white; }
         .btn-clear { background-color: #f2f2f7; color: #ff3b30; } 
         
@@ -134,11 +142,53 @@
 
             map.flyTo([lat, lng], 14);
 
-            // 🔥 디데이 색상 계산 (앱을 실행하는 실시간 오늘 날짜 기준)
             if(expiryDate) {
-                var today = new Date(); // 매일매일 현재 날짜를 가져옴
+                var today = new Date(); // 접속한 스마트폰의 실제 오늘 날짜를 가져옵니다.
                 today.setHours(0,0,0,0);
                 var selectedDate = new Date(expiryDate);
                 
                 var diffTime = selectedDate - today;
-                var diffDays = Math.ceil(diffTime / (
+                var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                var dateDDay = document.getElementById('dateDDay');
+                var expiryInput = document.getElementById('expiry');
+                
+                if (diffDays < 0) {
+                    dateDDay.innerHTML = "(만료됨)";
+                    dateDDay.style.color = "#ff3b30";
+                    expiryInput.style.color = "#ff3b30"; 
+                } else if (diffDays <= 3) {
+                    dateDDay.innerHTML = "(D-" + diffDays + ")";
+                    dateDDay.style.color = "#ff3b30"; // 3일 전부터 빨간색
+                    expiryInput.style.color = "#ff3b30";
+                } else if (diffDays <= 15) {
+                    dateDDay.innerHTML = "(D-" + diffDays + ")";
+                    dateDDay.style.color = "#007aff"; // 15일 전에는 파란색
+                    expiryInput.style.color = "#007aff";
+                } else {
+                    dateDDay.innerHTML = "(D-" + diffDays + ")";
+                    dateDDay.style.color = "#333"; 
+                    expiryInput.style.color = "#333";
+                }
+            }
+        }
+
+        function clearMap() {
+            if (droneCircle) {
+                map.removeLayer(droneCircle);
+                droneCircle = null;
+            }
+            
+            document.getElementById('lat').value = '37.5665'; 
+            document.getElementById('lng').value = '126.9780';
+            document.getElementById('radius').value = '500'; 
+            
+            var expiryInput = document.getElementById('expiry');
+            expiryInput.value = '';
+            expiryInput.style.color = 'black'; 
+            
+            document.getElementById('dateDDay').innerHTML = ""; 
+        }
+    </script>
+</body>
+</html>
