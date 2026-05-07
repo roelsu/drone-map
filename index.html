@@ -14,16 +14,14 @@
             overflow: hidden; margin: 0; padding: 0; 
             font-family: -apple-system, sans-serif; 
             touch-action: none; background-color: white;
-            display: flex; flex-direction: column; /* 🔥 전체를 세로로 정렬 */
+            display: flex; flex-direction: column; 
         }
         
-        /* 🔥 지도가 남는 공간을 100% 꽉 채우도록 설정 (flex: 1) */
         #map { flex: 1; width: 100%; border-bottom: 1px solid #ccc; touch-action: auto; }
         
-        /* 🔥 하단 입력창은 딱 안의 내용물 크기만큼만 공간을 차지함 (flex: none) */
         .container { 
             flex: none; background: white; 
-            padding: 15px 15px 25px 15px; /* 아이폰 하단 여백을 위해 아래쪽 패딩을 조금 더 줌 */
+            padding: 12px 15px 20px 15px; 
             box-sizing: border-box; overflow: hidden; 
         }
         
@@ -33,12 +31,22 @@
 
         label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #666; }
         
-        /* 🔥 유효기간의 회색 배경을 없애고 모든 입력칸을 흰색으로 통일 */
-        input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; background-color: white; }
-        input[type="number"], input[type="date"] { font-size: 16px; } 
+        /* 🔥 모든 입력창 크기 완벽 일치 (아이폰 기본 스타일 강제 초기화) */
+        input { 
+            width: 100%; 
+            height: 44px; /* 높이를 명확하게 고정 */
+            padding: 10px; 
+            font-size: 16px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            background-color: white;
+            -webkit-appearance: none; /* iOS 날짜 입력창 찌그러짐 방지 */
+            appearance: none;
+        }
 
         .button-group { display: flex; gap: 10px; margin-top: 5px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-apply { background-color: #007aff; color: white; }
         .btn-clear { background-color: #f2f2f7; color: #ff3b30; } 
         
@@ -48,8 +56,7 @@
             box-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
 
-        /* 🔥 날짜 옆에 붙을 D-Day 텍스트 스타일 */
-        .date-status { font-size: 13px; font-weight: bold; margin-left: 5px; }
+        .date-dday { font-size: 13px; font-weight: bold; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -74,7 +81,7 @@
                 <input type="number" id="radius" value="500">
             </div>
             <div class="form-group">
-                <label>유효기간 종료일 <span id="dateStatus" class="date-status"></span></label>
+                <label>유효기간 종료일 <span id="dateDDay" class="date-dday"></span></label>
                 <input type="date" id="expiry">
             </div>
         </div>
@@ -127,54 +134,11 @@
 
             map.flyTo([lat, lng], 14);
 
-            // 🔥 날짜 색상 변경 로직
+            // 🔥 디데이 색상 계산 (앱을 실행하는 실시간 오늘 날짜 기준)
             if(expiryDate) {
-                var today = new Date();
+                var today = new Date(); // 매일매일 현재 날짜를 가져옴
                 today.setHours(0,0,0,0);
                 var selectedDate = new Date(expiryDate);
                 
                 var diffTime = selectedDate - today;
-                var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                var dateStatus = document.getElementById('dateStatus');
-                var expiryInput = document.getElementById('expiry');
-                
-                if (diffDays < 0) {
-                    dateStatus.innerHTML = "(만료됨)";
-                    dateStatus.style.color = "#ff3b30";
-                    expiryInput.style.color = "#ff3b30";
-                } else if (diffDays <= 3) {
-                    dateStatus.innerHTML = "(D-" + diffDays + ")";
-                    dateStatus.style.color = "#ff3b30"; // 3일 이하: 빨간색
-                    expiryInput.style.color = "#ff3b30";
-                } else if (diffDays <= 15) {
-                    dateStatus.innerHTML = "(D-" + diffDays + ")";
-                    dateStatus.style.color = "#007aff"; // 15일 이하: 파란색
-                    expiryInput.style.color = "#007aff";
-                } else {
-                    dateStatus.innerHTML = "(D-" + diffDays + ")";
-                    dateStatus.style.color = "#333"; // 넉넉할 때: 기본 검정색
-                    expiryInput.style.color = "#333";
-                }
-            }
-        }
-
-        function clearMap() {
-            if (droneCircle) {
-                map.removeLayer(droneCircle);
-                droneCircle = null;
-            }
-            
-            document.getElementById('lat').value = '';
-            document.getElementById('lng').value = '';
-            document.getElementById('radius').value = '500'; 
-            
-            var expiryInput = document.getElementById('expiry');
-            expiryInput.value = '';
-            expiryInput.style.color = 'black'; // 색상 원래대로
-            
-            document.getElementById('dateStatus').innerHTML = ""; // 상태 글씨 지우기
-        }
-    </script>
-</body>
-</html>
+                var diffDays = Math.ceil(diffTime / (
