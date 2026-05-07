@@ -16,28 +16,29 @@
             touch-action: none; background-color: white;
         }
         
-        #map { height: 48dvh; width: 100%; border-bottom: 1px solid #ccc; touch-action: auto; }
+        /* 🔥 지도를 60%로 크게 확대 */
+        #map { height: 60dvh; width: 100%; border-bottom: 1px solid #ccc; touch-action: auto; }
         
+        /* 🔥 하단 입력창을 40%로 축소하고 여백 조정 */
         .container { 
-            height: 52dvh; background: white; padding: 15px; 
+            height: 40dvh; background: white; padding: 15px; 
             box-sizing: border-box; overflow: hidden; 
         }
         
-        .form-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .form-row .form-group { margin-bottom: 0; flex: 1; }
-        .form-group { margin-bottom: 12px; }
+        .form-group { margin-bottom: 10px; }
 
         label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #666; }
         input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         input[type="number"], input[type="date"] { font-size: 16px; } 
 
-        /* 🔥 버튼 2개를 나란히 배치하기 위한 스타일 */
-        .button-group { display: flex; gap: 10px; margin-top: 10px; }
-        button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .button-group { display: flex; gap: 10px; margin-top: 5px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-apply { background-color: #007aff; color: white; }
-        .btn-clear { background-color: #f2f2f7; color: #ff3b30; } /* 애플 스타일의 빨간색 지우기 버튼 */
+        .btn-clear { background-color: #f2f2f7; color: #ff3b30; } 
 
-        .status { margin-top: 12px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; }
+        .status { margin-top: 10px; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 15px; }
         .valid { background-color: #d4edda; color: #155724; }
         .expired { background-color: #f8d7da; color: #721c24; }
         .empty { background-color: #e9ecef; color: #495057; }
@@ -65,13 +66,15 @@
             </div>
         </div>
         
-        <div class="form-group">
-            <label>반경 (m)</label>
-            <input type="number" id="radius" value="500">
-        </div>
-        <div class="form-group">
-            <label>유효기간 종료일</label>
-            <input type="date" id="expiry">
+        <div class="form-row">
+            <div class="form-group">
+                <label>반경 (m)</label>
+                <input type="number" id="radius" value="500">
+            </div>
+            <div class="form-group">
+                <label>유효기간 종료일</label>
+                <input type="date" id="expiry">
+            </div>
         </div>
         
         <div class="button-group">
@@ -140,21 +143,17 @@
             }
         }
 
-        // 🔥 새롭게 추가된 초기화(지우기) 기능
         function clearMap() {
-            // 1. 지도에 그려진 원 삭제
             if (droneCircle) {
                 map.removeLayer(droneCircle);
                 droneCircle = null;
             }
             
-            // 2. 입력칸 안의 숫자와 날짜 비우기
             document.getElementById('lat').value = '';
             document.getElementById('lng').value = '';
-            document.getElementById('radius').value = '500'; // 반경은 기본값으로 되돌림
+            document.getElementById('radius').value = '500'; 
             document.getElementById('expiry').value = '';
             
-            // 3. 상태 표시창 초기화
             var statusBox = document.getElementById('statusBox');
             statusBox.className = "status empty";
             statusBox.innerHTML = "정보를 입력해주세요";
