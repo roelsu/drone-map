@@ -9,24 +9,41 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        /* 전체 화면 꽉 채우기 */
         html, body { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; 
-            overflow: hidden; margin: 0; padding: 0; 
+            margin: 0; padding: 0; 
+            width: 100%; height: 100dvh; 
+            overflow: hidden; 
             font-family: -apple-system, sans-serif; 
-            touch-action: none; background-color: white;
-            display: grid; 
-            grid-template-rows: 1fr auto; 
+            background-color: white;
+        }
+
+        /* 🔥 새로운 방어벽: 전체를 감싸는 컨테이너 */
+        #app-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
         }
         
+        /* 🔥 사파리 버그 해결의 핵심 (min-height: 0) */
         #map { 
-            width: 100%; height: 100%; border-bottom: 1px solid #ccc; 
-            touch-action: auto; z-index: 1;
+            flex-grow: 1; 
+            min-height: 0; /* 이 한 줄이 지도가 증발하는 것을 막아줍니다! */
+            width: 100%; 
+            position: relative;
+            z-index: 1;
         }
         
+        /* 입력창은 자기 크기 유지하며 바닥에 붙음 */
         .container { 
-            width: 100%; background: white; 
+            flex-shrink: 0; 
+            width: 100%; 
+            background: white; 
             padding: 15px 15px calc(15px + env(safe-area-inset-bottom)) 15px; 
-            box-sizing: border-box; z-index: 2;
+            box-sizing: border-box; 
+            z-index: 2;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* 얕은 그림자로 지도와 분리감 줌 */
         }
         
         .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
@@ -45,91 +62,4 @@
 
         input[type="date"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
 
-        .button-group { display: flex; gap: 10px; margin-top: 5px; }
-        button { flex: 1; height: 46px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .btn-apply { background-color: #007aff; color: white; }
-        .btn-clear { background-color: #f2f2f7; color: #ff3b30; } 
-        
-        .my-location-dot {
-            width: 12px; height: 12px; background-color: #007aff;
-            border: 2px solid white; border-radius: 50%;
-            box-shadow: 0 0 5px rgba(0,0,0,0.3);
-        }
-
-        .date-dday { font-size: 13px; font-weight: bold; margin-left: 5px; }
-    </style>
-</head>
-<body>
-
-    <div id="map"></div>
-    
-    <div class="container">
-        <div class="form-row">
-            <div class="form-group">
-                <label>위도 (Lat)</label>
-                <input type="text" id="lat" value="37.5665" placeholder="예: 37° 24′ 40″ N">
-            </div>
-            <div class="form-group">
-                <label>경도 (Lng)</label>
-                <input type="text" id="lng" value="126.9780" placeholder="예: 126° 55′ 49″ E">
-            </div>
-        </div>
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label>반경 (m)</label>
-                <input type="number" id="radius" value="500">
-            </div>
-            <div class="form-group">
-                <label>유효기간 종료일 <span id="dateDDay" class="date-dday"></span></label>
-                <input type="date" id="expiry">
-            </div>
-        </div>
-        
-        <div class="button-group">
-            <button class="btn-clear" onclick="clearMap()">지우기</button>
-            <button class="btn-apply" onclick="updateMap()">지도에 적용</button>
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        document.querySelector('.container').addEventListener('touchstart', function(e) {
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-                document.activeElement.blur();
-            }
-        });
-
-        var map = L.map('map', { zoomControl: false }).setView([37.5665, 126.9780], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        setTimeout(function() {
-            map.invalidateSize();
-        }, 100);
-
-        var droneCircle;
-        var myLocationMarker;
-
-        map.locate({ setView: true, maxZoom: 15, watch: true });
-
-        function onLocationFound(e) {
-            if (myLocationMarker) map.removeLayer(myLocationMarker);
-            var locationIcon = L.divIcon({ className: 'my-location-dot' });
-            myLocationMarker = L.marker(e.latlng, { icon: locationIcon }).addTo(map);
-        }
-        map.on('locationfound', onLocationFound);
-
-        // 🔥 스마트 좌표 변환기 (도/분/초 문자를 소수점 숫자로 자동 계산)
-        function parseCoordinate(inputStr) {
-            if (!inputStr) return NaN;
-            
-            // 입력된 문자열에서 기호 빼고 '숫자'만 순서대로 추출
-            var matches = inputStr.match(/\d+(\.\d+)?/g);
-            if (!matches) return NaN;
-
-            var val = 0;
-            if (matches.length >= 3) {
-                // 도, 분, 초 3개가 다 들어있는 경우
-                val = parseFloat(matches[0]) + (parseFloat(matches[1]) / 60) + (parseFloat(matches[2]) / 3600);
-            } else if (matches.length === 2) {
-                // 도, 분 2개만 있는 경우
+        .button-group
