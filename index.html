@@ -9,31 +9,24 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        /* 🔥 절대 실패하지 않는 CSS Grid 레이아웃 적용 */
         html, body { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; 
             overflow: hidden; margin: 0; padding: 0; 
             font-family: -apple-system, sans-serif; 
             touch-action: none; background-color: white;
             display: grid; 
-            grid-template-rows: 1fr auto; /* 지도는 남는 공간 100%(1fr), 입력창은 내용물 크기만큼만(auto) */
+            grid-template-rows: 1fr auto; 
         }
         
         #map { 
-            width: 100%; 
-            height: 100%; /* Grid가 남겨준 1fr 공간을 꽉 채움 */
-            border-bottom: 1px solid #ccc; 
-            touch-action: auto; 
-            z-index: 1;
+            width: 100%; height: 100%; border-bottom: 1px solid #ccc; 
+            touch-action: auto; z-index: 1;
         }
         
         .container { 
-            width: 100%; 
-            background: white; 
-            /* 🔥 아이폰 하단 안전 영역(Home Bar)을 계산해서 바닥에 딱 맞게 패딩 조절 */
+            width: 100%; background: white; 
             padding: 15px 15px calc(15px + env(safe-area-inset-bottom)) 15px; 
-            box-sizing: border-box; 
-            z-index: 2;
+            box-sizing: border-box; z-index: 2;
         }
         
         .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
@@ -74,11 +67,11 @@
         <div class="form-row">
             <div class="form-group">
                 <label>위도 (Lat)</label>
-                <input type="number" id="lat" value="37.5665" step="0.0001">
+                <input type="text" id="lat" value="37.5665" placeholder="예: 37° 24′ 40″ N">
             </div>
             <div class="form-group">
                 <label>경도 (Lng)</label>
-                <input type="number" id="lng" value="126.9780" step="0.0001">
+                <input type="text" id="lng" value="126.9780" placeholder="예: 126° 55′ 49″ E">
             </div>
         </div>
         
@@ -110,7 +103,6 @@
         var map = L.map('map', { zoomControl: false }).setView([37.5665, 126.9780], 14);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // 🔥 지도 증발 완벽 방지: 0.1초 뒤에 지도가 자기 크기를 강제로 다시 계산하게 만듦
         setTimeout(function() {
             map.invalidateSize();
         }, 100);
@@ -127,72 +119,17 @@
         }
         map.on('locationfound', onLocationFound);
 
-        function updateMap() {
-            var lat = parseFloat(document.getElementById('lat').value);
-            var lng = parseFloat(document.getElementById('lng').value);
-            var radius = parseFloat(document.getElementById('radius').value);
-            var expiryDate = document.getElementById('expiry').value;
-
-            if (isNaN(lat) || isNaN(lng) || isNaN(radius)) return alert("좌표와 반경을 숫자로 입력해주세요.");
-
-            if (droneCircle) map.removeLayer(droneCircle);
-
-            droneCircle = L.circle([lat, lng], {
-                color: '#ff3b30',
-                fillColor: '#ff3b30',
-                fillOpacity: 0.2,
-                radius: radius
-            }).addTo(map);
-
-            map.flyTo([lat, lng], 14);
-
-            if(expiryDate) {
-                var today = new Date(); 
-                today.setHours(0,0,0,0);
-                var selectedDate = new Date(expiryDate);
-                
-                var diffTime = selectedDate - today;
-                var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                var dateDDay = document.getElementById('dateDDay');
-                var expiryInput = document.getElementById('expiry');
-                
-                if (diffDays < 0) {
-                    dateDDay.innerHTML = "(만료됨)";
-                    dateDDay.style.color = "#ff3b30";
-                    expiryInput.style.color = "#ff3b30"; 
-                } else if (diffDays <= 3) {
-                    dateDDay.innerHTML = "(D-" + diffDays + ")";
-                    dateDDay.style.color = "#ff3b30"; 
-                    expiryInput.style.color = "#ff3b30";
-                } else if (diffDays <= 15) {
-                    dateDDay.innerHTML = "(D-" + diffDays + ")";
-                    dateDDay.style.color = "#007aff"; 
-                    expiryInput.style.color = "#007aff";
-                } else {
-                    dateDDay.innerHTML = "(D-" + diffDays + ")";
-                    dateDDay.style.color = "#333"; 
-                    expiryInput.style.color = "#333";
-                }
-            }
-        }
-
-        function clearMap() {
-            if (droneCircle) {
-                map.removeLayer(droneCircle);
-                droneCircle = null;
-            }
+        // 🔥 스마트 좌표 변환기 (도/분/초 문자를 소수점 숫자로 자동 계산)
+        function parseCoordinate(inputStr) {
+            if (!inputStr) return NaN;
             
-            document.getElementById('lat').value = '37.5665'; 
-            document.getElementById('lng').value = '126.9780';
-            document.getElementById('radius').value = '500'; 
-            
-            var expiryInput = document.getElementById('expiry');
-            expiryInput.value = '';
-            expiryInput.style.color = 'black'; 
-            
-            document.getElementById('dateDDay').innerHTML = ""; 
-        }
-    </script>
-</body>
-</html>
+            // 입력된 문자열에서 기호 빼고 '숫자'만 순서대로 추출
+            var matches = inputStr.match(/\d+(\.\d+)?/g);
+            if (!matches) return NaN;
+
+            var val = 0;
+            if (matches.length >= 3) {
+                // 도, 분, 초 3개가 다 들어있는 경우
+                val = parseFloat(matches[0]) + (parseFloat(matches[1]) / 60) + (parseFloat(matches[2]) / 3600);
+            } else if (matches.length === 2) {
+                // 도, 분 2개만 있는 경우
