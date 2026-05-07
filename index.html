@@ -38,17 +38,23 @@
         .btn-add { background-color: #007aff; color: white; }
         .btn-reset { background-color: #ff3b30; color: white; flex: 0.3; }
 
-        /* 🔥 촬영지 리스트 스타일 */
         #location-list { 
             margin-top: 12px; max-height: 120px; overflow-y: auto; 
             border-top: 1px inset #eee; padding-top: 10px;
         }
+        
+        /* 🔥 리스트 아이템에 터치할 수 있다는 느낌(cursor: pointer) 추가 */
         .location-item { 
             display: flex; justify-content: space-between; align-items: center;
-            padding: 8px; border-radius: 8px; background: #f8f8f8; margin-bottom: 6px; font-size: 13px;
+            padding: 8px 12px; border-radius: 8px; background: #f8f8f8; margin-bottom: 6px; font-size: 13px;
+            cursor: pointer; transition: background 0.2s;
         }
-        .item-info { display: flex; flex-direction: column; gap: 2px; }
-        .item-dday { font-weight: bold; }
+        /* 터치 시 색상 살짝 변함 */
+        .location-item:active { background: #ebebeb; }
+        
+        .item-info { display: flex; flex-direction: column; gap: 2px; pointer-events: none; }
+        .item-dday { font-weight: bold; pointer-events: none; }
+        
         .btn-delete { background: none; color: #ff3b30; font-size: 18px; width: auto; height: auto; padding: 0 5px; }
         
         .my-location-dot {
@@ -89,7 +95,6 @@
         var circleLayers = [];
         var myLocationMarker;
 
-        // 초기 로드 시 실행
         window.onload = function() {
             renderAll();
             map.locate({ setView: true, maxZoom: 14, watch: true });
@@ -108,7 +113,6 @@
             return /[swSW남서]/.test(str) ? -v : v;
         }
 
-        // 🔥 촬영지 추가 함수
         function addNewLocation() {
             var latVal = parseCoordinate(document.getElementById('lat').value);
             var lngVal = parseCoordinate(document.getElementById('lng').value);
@@ -121,7 +125,6 @@
             locations.push(newLoc);
             saveAndRender();
             
-            // 입력창 비우기
             document.getElementById('lat').value = '';
             document.getElementById('lng').value = '';
         }
@@ -132,7 +135,6 @@
         }
 
         function renderAll() {
-            // 지도 초기화
             circleLayers.forEach(layer => map.removeLayer(layer));
             circleLayers = [];
             
@@ -141,30 +143,37 @@
             today.setHours(0,0,0,0);
 
             locations.forEach((loc, index) => {
-                // 1. 지도에 원 그리기
                 var circle = L.circle([loc.lat, loc.lng], {
                     color: '#ff3b30', fillColor: '#ff3b30', fillOpacity: 0.2, radius: loc.radius
                 }).addTo(map);
                 circleLayers.push(circle);
 
-                // 2. 리스트 아이템 만들기
                 var expDate = new Date(loc.expiry);
                 var diff = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
                 var color = diff <= 3 ? "#ff3b30" : (diff <= 15 ? "#007aff" : "#333");
                 var dText = diff < 0 ? "만료" : "D-" + diff;
 
-                listHtml += `<div class="location-item">
+                // 🔥 항목 전체에 onclick 이벤트를 달아 지도가 이동하게 만듦
+                // 🔥 삭제 버튼에는 event.stopPropagation()을 넣어서 지도가 이동하지 않게 차단
+                listHtml += `<div class="location-item" onclick="moveToLoc(${loc.lat}, ${loc.lng})">
                     <div class="item-info">
                         <strong>촬영지 ${index + 1} (${loc.radius}m)</strong>
                         <span>${loc.expiry}</span>
                     </div>
                     <div class="item-dday" style="color: ${color}">${dText}</div>
-                    <button class="btn-delete" onclick="deleteLoc(${loc.id})">×</button>
+                    <button class="btn-delete" onclick="event.stopPropagation(); deleteLoc(${loc.id})">×</button>
                 </div>`;
             });
 
             document.getElementById('location-list').innerHTML = listHtml || "<p style='text-align:center;color:#999;font-size:12px;'>등록된 촬영지가 없습니다.</p>";
+            
+            // 새 항목이 추가되면 가장 마지막에 추가된 항목 위치로 자동 이동
             if (locations.length > 0) map.flyTo([locations[locations.length-1].lat, locations[locations.length-1].lng], 13);
+        }
+
+        // 🔥 리스트 클릭 시 지도 이동 함수
+        function moveToLoc(lat, lng) {
+            map.flyTo([lat, lng], 14); // 줌 레벨 14로 부드럽게 줌인/이동
         }
 
         function deleteLoc(id) {
