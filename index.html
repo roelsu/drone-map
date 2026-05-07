@@ -9,17 +9,46 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f2f2f7; }
-        #map { height: 45vh; width: 100%; border-bottom: 1px solid #ccc; z-index: 1; }
-        .container { padding: 20px; background: white; height: 55vh; overflow-y: auto; box-sizing: border-box; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #555; }
-        input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #d1d1d6; border-radius: 8px; box-sizing: border-box; background-color: #fafafa; }
-        button { width: 100%; padding: 15px; background-color: #007aff; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .status { margin-top: 15px; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 17px; }
+        html, body { 
+            position: fixed; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, sans-serif; 
+        }
+        #map { height: 50vh; width: 100%; border-bottom: 1px solid #ccc; }
+        .container { 
+            height: 50vh; 
+            background: white; 
+            padding: 15px; 
+            box-sizing: border-box; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .form-group { margin-bottom: 12px; }
+        
+        /* 🔥 새로 추가된 가로 정렬 스타일 (위도, 경도 한줄 묶기) */
+        .form-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .form-row .form-group { margin-bottom: 0; flex: 1; }
+
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #666; }
+        input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background-color: #007aff; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .status { margin-top: 12px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; }
         .valid { background-color: #d4edda; color: #155724; }
         .expired { background-color: #f8d7da; color: #721c24; }
         .empty { background-color: #e9ecef; color: #495057; }
+        
+        .my-location-dot {
+            width: 12px; height: 12px;
+            background-color: #007aff;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
@@ -27,14 +56,17 @@
     <div id="map"></div>
     
     <div class="container">
-        <div class="form-group">
-            <label>위도 (Latitude)</label>
-            <input type="number" id="lat" value="37.5665" step="0.0001">
+        <div class="form-row">
+            <div class="form-group">
+                <label>위도 (Lat)</label>
+                <input type="number" id="lat" value="37.5665" step="0.0001">
+            </div>
+            <div class="form-group">
+                <label>경도 (Lng)</label>
+                <input type="number" id="lng" value="126.9780" step="0.0001">
+            </div>
         </div>
-        <div class="form-group">
-            <label>경도 (Longitude)</label>
-            <input type="number" id="lng" value="126.9780" step="0.0001">
-        </div>
+        
         <div class="form-group">
             <label>반경 (m)</label>
             <input type="number" id="radius" value="500">
@@ -44,18 +76,25 @@
             <input type="date" id="expiry">
         </div>
         <button onclick="updateMap()">지도에 적용하기</button>
-        
-        <div id="statusBox" class="status empty">날짜를 입력해주세요</div>
+        <div id="statusBox" class="status empty">정보를 입력해주세요</div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map').setView([37.5665, 126.9780], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        var map = L.map('map', { zoomControl: false }).setView([37.5665, 126.9780], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        var circle;
+        var droneCircle;
+        var myLocationMarker;
+
+        map.locate({ setView: true, maxZoom: 15, watch: true });
+
+        function onLocationFound(e) {
+            if (myLocationMarker) map.removeLayer(myLocationMarker);
+            var locationIcon = L.divIcon({ className: 'my-location-dot' });
+            myLocationMarker = L.marker(e.latlng, { icon: locationIcon }).addTo(map);
+        }
+        map.on('locationfound', onLocationFound);
 
         function updateMap() {
             var lat = parseFloat(document.getElementById('lat').value);
@@ -63,30 +102,26 @@
             var radius = parseFloat(document.getElementById('radius').value);
             var expiryDate = document.getElementById('expiry').value;
 
-            if(isNaN(lat) || isNaN(lng) || isNaN(radius)) {
-                return alert("좌표와 반경을 숫자로 입력해주세요.");
-            }
+            if (droneCircle) map.removeLayer(droneCircle);
 
-            if (circle) map.removeLayer(circle);
-
-            circle = L.circle([lat, lng], {
-                color: '#007aff',
-                fillColor: '#007aff',
-                fillOpacity: 0.25,
+            droneCircle = L.circle([lat, lng], {
+                color: '#ff3b30',
+                fillColor: '#ff3b30',
+                fillOpacity: 0.2,
                 radius: radius
             }).addTo(map);
 
-            map.flyTo([lat, lng], 15);
+            map.flyTo([lat, lng], 14);
 
             if(expiryDate) {
                 var today = new Date();
                 today.setHours(0,0,0,0);
                 var selectedDate = new Date(expiryDate);
-                
                 var statusBox = document.getElementById('statusBox');
+                
                 if(selectedDate >= today) {
                     statusBox.className = "status valid";
-                    statusBox.innerHTML = "✅ 비행 가능 (승인 구역)";
+                    statusBox.innerHTML = "✅ 비행 승인 기간 (사용 가능)";
                 } else {
                     statusBox.className = "status expired";
                     statusBox.innerHTML = "❌ 기간 만료 (비행 불가)";
