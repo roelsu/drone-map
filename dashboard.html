@@ -13,12 +13,10 @@
             background-color: #f5f7fa; overflow: hidden; position: relative;
         }
 
-        /* 🗺️ 지도는 무조건 100% 전체 화면을 꽉 채웁니다 */
         #map { 
             width: 100%; height: 100dvh; z-index: 1; position: absolute; top: 0; left: 0;
         }
         
-        /* 🔥 서랍 전체를 감싸는 껍데기 (얘가 통째로 움직임) */
         .sidebar-wrapper {
             position: absolute; top: 0; right: 0; 
             width: 360px; max-width: 85vw; height: 100dvh; 
@@ -26,12 +24,10 @@
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        /* 숨김 상태 클래스 */
         .sidebar-wrapper.hidden {
             transform: translateX(100%);
         }
 
-        /* 🔘 잘리지 않고 무사히 살아남은 문손잡이 버튼 */
         .toggle-btn {
             position: absolute; top: 40px; left: -44px; z-index: 1002;
             width: 44px; height: 48px; background: #3182ce; color: white; 
@@ -39,7 +35,6 @@
             box-shadow: -2px 2px 8px rgba(0,0,0,0.2); border: none; font-size: 18px; cursor: pointer;
         }
 
-        /* 📱 실제 내용물이 들어가는 패널 (스크롤은 여기서만 발생) */
         .dashboard-panel { 
             width: 100%; height: 100%; 
             background-color: rgba(255, 255, 255, 0.92); 
@@ -51,7 +46,6 @@
             display: flex; flex-direction: column;
         }
 
-        /* 📍 내 위치 버튼 (화면 왼쪽 아래 고정) */
         .my-location-btn {
             position: absolute; bottom: 30px; left: 20px; z-index: 1000;
             width: 44px; height: 44px; background: white; border-radius: 50%;
@@ -60,7 +54,6 @@
         }
         .my-location-dot { width: 12px; height: 12px; background-color: #3182ce; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
 
-        /* --- 폼 스타일 --- */
         .form-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex: none; }
         .form-row { display: flex; gap: 8px; align-items: flex-start; }
         .form-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -83,7 +76,6 @@
         .btn-add { background-color: #3182ce; color: white; flex: 2; }
         .btn-clear { background-color: #e2e8f0; color: #4a5568; flex: 0.5; }
 
-        /* --- 리스트 영역 --- */
         .list-section { border-top: 1px solid #e2e8f0; margin-top: 15px; padding-top: 12px; flex: 1; overflow-y: visible; }
         .list-title { font-size: 13px; font-weight: 700; color: #2d3748; margin-bottom: 10px; }
         #location-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
@@ -116,256 +108,4 @@
 <body>
 
     <div id="map">
-        <button class="my-location-btn" onclick="goToMyLocation()">📍</button>
-    </div>
-    
-    <div class="sidebar-wrapper" id="sidebar-wrapper">
-        <button class="toggle-btn" id="toggle-btn" onclick="togglePanel()">▶️</button>
-
-        <div class="dashboard-panel">
-            <div class="form-container">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>드론 원스톱 좌표 일괄 붙여넣기</label>
-                        <textarea id="bulk-coords" placeholder="좌표를 붙여넣으세요"></textarea>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group" style="flex: 2;">
-                        <label>승인 종류</label>
-                        <div class="checkbox-wrap">
-                            <label><input type="checkbox" id="chk-flight" checked> ✈️ 비행</label>
-                            <label><input type="checkbox" id="chk-photo" checked> 📷 촬영</label>
-                        </div>
-                    </div>
-                    <div class="form-group" style="flex: 1; max-width: 80px;">
-                        <label>반경(m)</label>
-                        <input type="number" id="radius" value="500">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group" style="padding-right: 4px;">
-                        <label>신청 날짜</label>
-                        <input type="date" id="app-date" style="border-width: 2px; border-color: #a0aec0;">
-                    </div>
-                    <div class="form-group" style="padding-left: 4px;">
-                        <label>만료 날짜</label>
-                        <input type="date" id="expiry-date" style="border-width: 2px; border-color: #a0aec0;">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>메모 (특이사항)</label>
-                        <input type="text" id="memo" placeholder="예: 인근 군사시설 고도 제한">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="button-group">
-                <button class="action-btn btn-add" onclick="addNewLocation()">✅ 손잡이 복구 완료</button>
-                <button class="action-btn btn-clear" onclick="clearInputs()">비우기</button>
-            </div>
-
-            <div class="list-section">
-                <div class="list-title">📋 관리 내역</div>
-                <div id="location-list"></div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        var map = L.map('map', { zoomControl: false }).setView([37.5500, 126.9000], 11);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        var vworldKey = "FDA33FFB-A42D-345E-9959-E73DF75D2036";
-        var vworldDomain = "https://roelsu.github.io";
-
-        L.tileLayer.wms("https://api.vworld.kr/req/wms", {
-            layers: 'lt_c_aisprhc,lt_c_aisctrc,lt_c_aisresa', 
-            styles: '', format: 'image/png', transparent: true,
-            version: '1.3.0', key: vworldKey, domain: vworldDomain,
-            crs: L.CRS.EPSG3857, opacity: 0.4
-        }).addTo(map);
-
-        var isPanelHidden = false;
-        function togglePanel() {
-            isPanelHidden = !isPanelHidden;
-            // 패널 내용물이 아니라 껍데기를 움직입니다.
-            var wrapper = document.getElementById('sidebar-wrapper');
-            var btn = document.getElementById('toggle-btn');
-            
-            if(isPanelHidden) {
-                wrapper.classList.add('hidden');
-                btn.innerHTML = '◀️'; 
-            } else {
-                wrapper.classList.remove('hidden');
-                btn.innerHTML = '▶️'; 
-            }
-        }
-
-        var locations = JSON.parse(localStorage.getItem('drone_dashboard_locs')) || [];
-        var circleLayers = [];
-        var myLocationMarker;
-        var myCurrentLatLng = null;
-        var isFirstLocation = true;
-
-        window.onload = function() {
-            renderAll();
-            map.locate({ watch: true, setView: false, enableHighAccuracy: true });
-        };
-
-        map.on('locationfound', function(e) {
-            myCurrentLatLng = e.latlng;
-            if (myLocationMarker) map.removeLayer(myLocationMarker);
-            myLocationMarker = L.marker(e.latlng, { icon: L.divIcon({ className: 'my-location-dot' }) }).addTo(map);
-            if (isFirstLocation) { map.setView(e.latlng, 11); isFirstLocation = false; }
-        });
-
-        function goToMyLocation() {
-            if (myCurrentLatLng) map.flyTo(myCurrentLatLng, 13);
-        }
-
-        function extractAllCoordinates(text) {
-            var nums = text.match(/\d+(\.\d+)?/g);
-            if(!nums) return [];
-            var results = [];
-            var i = 0;
-            while(i < nums.length) {
-                var v = parseFloat(nums[i]);
-                if(v >= 33 && v <= 39) {
-                    var latVal = v;
-                    var jump = 1;
-                    if (latVal % 1 === 0 && i + 2 < nums.length && parseFloat(nums[i+1]) < 60) {
-                        latVal += parseFloat(nums[i+1])/60 + parseFloat(nums[i+2])/3600; jump = 3; 
-                    }
-                    var j = i + jump;
-                    while(j < nums.length && j < i + jump + 5) { 
-                        var lv = parseFloat(nums[j]);
-                        if(lv >= 124 && lv <= 132) {
-                            var lngVal = lv;
-                            if (lngVal % 1 === 0 && j + 2 < nums.length && parseFloat(nums[j+1]) < 60) {
-                                lngVal += parseFloat(nums[j+1])/60 + parseFloat(nums[j+2])/3600; j += 2; 
-                            }
-                            results.push({lat: latVal, lng: lngVal});
-                            i = j; break;
-                        }
-                        j++;
-                    }
-                }
-                i++;
-            }
-            return results;
-        }
-
-        function addNewLocation() {
-            var text = document.getElementById('bulk-coords').value;
-            var isFlight = document.getElementById('chk-flight').checked;
-            var isPhoto = document.getElementById('chk-photo').checked;
-            var appVal = document.getElementById('app-date').value;
-            var expVal = document.getElementById('expiry-date').value;
-            var radVal = parseFloat(document.getElementById('radius').value);
-            var memoVal = document.getElementById('memo').value;
-
-            if (!text || !expVal || isNaN(radVal)) {
-                return alert("좌표 텍스트, 만료 날짜, 반경을 입력해 주세요.");
-            }
-            
-            var coords = extractAllCoordinates(text);
-            if (coords.length === 0) return alert("유효한 대한민국 좌표를 찾지 못했습니다.");
-
-            coords.forEach(coord => {
-                locations.push({
-                    id: Date.now() + Math.random(),
-                    lat: coord.lat, lng: coord.lng, radius: radVal,
-                    isFlight: isFlight, isPhoto: isPhoto,
-                    appDate: appVal || "-", expiry: expVal,
-                    memo: memoVal || "기록 없음"
-                });
-            });
-
-            saveAndRender();
-            var lastCoord = coords[coords.length - 1];
-            map.flyTo([lastCoord.lat, lastCoord.lng], 13);
-            clearInputs();
-        }
-
-        function clearInputs() {
-            document.getElementById('bulk-coords').value = '';
-            document.getElementById('chk-flight').checked = true;
-            document.getElementById('chk-photo').checked = true;
-            document.getElementById('app-date').value = '';
-            document.getElementById('expiry-date').value = '';
-            document.getElementById('radius').value = '500';
-            document.getElementById('memo').value = '';
-        }
-
-        function saveAndRender() {
-            localStorage.setItem('drone_dashboard_locs', JSON.stringify(locations));
-            renderAll();
-        }
-
-        function renderAll() {
-            circleLayers.forEach(layer => map.removeLayer(layer));
-            circleLayers = [];
-            var listHtml = "";
-            var today = new Date();
-            today.setHours(0,0,0,0);
-
-            locations.forEach((loc, index) => {
-                var circle = L.circle([loc.lat, loc.lng], {
-                    color: '#3182ce', fillColor: '#3182ce', fillOpacity: 0.15, radius: loc.radius
-                }).addTo(map);
-                
-                var popupContent = `
-                    <div style="font-family: sans-serif; font-size: 13px; color: #1a202c;">
-                        <b style="color: #2b6cb0;">${loc.isFlight ? '✈️ 비행' : ''} ${loc.isPhoto ? '📷 촬영' : ''} 승인구역</b><br>
-                        <span style="color: #e53e3e; font-weight: bold; display: inline-block; margin-top: 4px;">⏳ 만료일: ${loc.expiry}</span><br>
-                        <span style="color: #4a5568; display: inline-block; margin-top: 2px;">📝 메모: ${loc.memo}</span>
-                    </div>
-                `;
-                circle.bindPopup(popupContent);
-                circleLayers.push(circle);
-
-                var badgesHtml = "";
-                if (loc.isFlight) badgesHtml += `<span class="type-badge badge-flight">✈️ 비행</span> `;
-                if (loc.isPhoto) badgesHtml += `<span class="type-badge badge-photo">📷 촬영</span>`;
-                if (!loc.isFlight && !loc.isPhoto) badgesHtml += `<span class="type-badge badge-none">⚠️ 미승인</span>`;
-
-                var expDate = new Date(loc.expiry);
-                var diff = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-                var badgeColor = "", textColor = "", dText = "";
-
-                if (diff < 0) { badgeColor = "#e2e8f0"; textColor = "#718096"; dText = "만료"; } 
-                else if (diff <= 3) { badgeColor = "#fed7d7"; textColor = "#e53e3e"; dText = "D-" + diff; } 
-                else if (diff <= 15) { badgeColor = "#feebc8"; textColor = "#dd6b20"; dText = "D-" + diff; } 
-                else { badgeColor = "#ebf8ff"; textColor = "#3182ce"; dText = "D-" + diff; }
-
-                listHtml += `
-                <div class="location-card" onclick="moveToLoc(${loc.lat}, ${loc.lng})">
-                    <div class="card-main">
-                        <div class="card-header-row">
-                            <span class="card-title">신청 구역 ${index + 1} (${loc.radius}m)</span>
-                            <div class="badges">${badgesHtml}</div>
-                        </div>
-                        <div class="card-meta">📅 신청: ${loc.appDate} | ⏳ 만료: ${loc.expiry}</div>
-                        <div class="card-memo">📝 ${loc.memo}</div>
-                    </div>
-                    <div class="card-right" onclick="event.stopPropagation();">
-                        <div class="d-day-badge" style="background-color: ${badgeColor}; color: ${textColor};">${dText}</div>
-                        <button class="btn-delete" onclick="deleteLoc(${loc.id})">삭제</button>
-                    </div>
-                </div>`;
-            });
-            
-            document.getElementById('location-list').innerHTML = listHtml || "<p style='text-align:center;color:#a0aec0;font-size:12px;padding:15px 0;'>등록된 비행 신청 내역이 없습니다.</p>";
-        }
-
-        function moveToLoc(lat, lng) { map.flyTo([lat, lng], 14); }
-        function deleteLoc(id) { locations = locations.filter(l => l.id !== id); saveAndRender(); }
-    </script>
-</body>
-</html>
+        <button class="my
