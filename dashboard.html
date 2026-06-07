@@ -16,10 +16,12 @@
             background-color: #f5f7fa; overflow: hidden; position: relative;
         }
 
+        /* 지도는 100% 전체 화면 */
         #map { 
             width: 100%; height: 100dvh; z-index: 1; position: absolute; top: 0; left: 0;
         }
         
+        /* 우측 측면 서랍장 패널 껍데기 */
         .sidebar-wrapper {
             position: absolute; top: 0; right: 0; 
             width: 360px; max-width: 85vw; height: 100dvh; 
@@ -27,10 +29,12 @@
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
+        /* 숨김 상태 클래스 */
         .sidebar-wrapper.hidden {
             transform: translateX(100%);
         }
 
+        /* 측면 서랍장 열고 닫는 손잡이 버튼 */
         .toggle-btn {
             position: absolute; top: 40px; left: -44px; z-index: 1002;
             width: 44px; height: 48px; background: #3182ce; color: white; 
@@ -38,6 +42,7 @@
             box-shadow: -2px 2px 8px rgba(0,0,0,0.2); border: none; font-size: 18px; cursor: pointer;
         }
 
+        /* 실제 내용물이 들어가는 내부 패널 */
         .dashboard-panel { 
             width: 100%; height: 100%; 
             background-color: rgba(255, 255, 255, 0.92); 
@@ -49,6 +54,7 @@
             display: flex; flex-direction: column;
         }
 
+        /* 내 위치 버튼 (좌측 하단 고정) */
         .my-location-btn {
             position: absolute; bottom: 30px; left: 20px; z-index: 1000;
             width: 44px; height: 44px; background: white; border-radius: 50%;
@@ -57,6 +63,7 @@
         }
         .my-location-dot { width: 12px; height: 12px; background-color: #3182ce; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
 
+        /* 폼 요소 공통 레이아웃 */
         .form-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex: none; }
         .form-row { display: flex; gap: 8px; align-items: flex-start; }
         .form-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -79,6 +86,7 @@
         .btn-add { background-color: #3182ce; color: white; flex: 2; }
         .btn-clear { background-color: #e2e8f0; color: #4a5568; flex: 0.5; }
 
+        /* 관리 내역 리스트 영역 */
         .list-section { border-top: 1px solid #e2e8f0; margin-top: 15px; padding-top: 12px; flex: 1; overflow-y: visible; }
         .list-title { font-size: 13px; font-weight: 700; color: #2d3748; margin-bottom: 10px; }
         #location-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
@@ -173,24 +181,20 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // =================================================================
-        // 🛠️ [필수 설정] 파이어베이스 콘솔에서 복사한 고유 설정값을 여기에 넣으세요!
-        // =================================================================
+        // 회원님의 파이어베이스 웹용 고유 설정값 적용 완료
         var firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyCQlcMwNfPicDN5AYLKZ9G0a7sc7Oc2d4E",
+            authDomain: "drone-map-3aae0.firebaseapp.com",
+            databaseURL: "https://drone-map-3aae0-default-rtdb.firebaseio.com",
+            projectId: "drone-map-3aae0",
+            storageBucket: "drone-map-3aae0.firebasestorage.app",
+            messagingSenderId: "833583593957",
+            appId: "1:833583593957:web:38f16f2a0d71885af5d70c"
         };
         
-        // 파이어베이스 초기화
         firebase.initializeApp(firebaseConfig);
         var database = firebase.database();
         var locationsRef = database.ref('drone_locations');
-        // =================================================================
 
         var map = L.map('map', { zoomControl: false }).setView([37.5500, 126.9000], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -226,12 +230,12 @@
         var myCurrentLatLng = null;
         var isFirstLocation = true;
 
-        // 🔥 로컬 스토리지 대신 파이어베이스에서 실시간으로 데이터를 수신하여 동기화
+        // 파이어베이스 데이터베이스 실시간 수신 대기 설정
         locationsRef.on('value', function(snapshot) {
             locations = [];
             snapshot.forEach(function(childSnapshot) {
                 var data = childSnapshot.val();
-                data.fbKey = childSnapshot.key; // 삭제 처리를 위해 파이어베이스 고유 키 저장
+                data.fbKey = childSnapshot.key;
                 locations.push(data);
             });
             renderAll();
@@ -301,7 +305,6 @@
             if (coords.length === 0) return alert("유효한 대한민국 좌표를 찾지 못했습니다.");
 
             coords.forEach(coord => {
-                // 🔥 로컬 배열 대신 파이어베이스 데이터베이스로 업로드
                 locationsRef.push({
                     lat: coord.lat, lng: coord.lng, radius: radVal,
                     isFlight: isFlight, isPhoto: isPhoto,
@@ -383,7 +386,6 @@
 
         function moveToLoc(lat, lng) { map.flyTo([lat, lng], 14); }
         
-        // 🔥 파이어베이스 노드 삭제 함수
         function deleteLoc(fbKey) { 
             if(confirm("이 승인 구역을 삭제하시겠습니까? 모든 기기에서 즉시 삭제됩니다.")) {
                 locationsRef.child(fbKey).remove(); 
