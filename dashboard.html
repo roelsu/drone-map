@@ -27,29 +27,32 @@
         }
         
         .form-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        .form-row { display: flex; gap: 8px; align-items: flex-start; }
-        .form-group { flex: 1; display: flex; flex-direction: column; }
+        .form-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 120px; display: flex; flex-direction: column; }
         
-        /* 🔥 신청/만료 날짜 칸의 너비를 제한하는 전용 스타일 */
+        /* 📱 큰 글자 크기 대응: 모바일에서는 날짜 행을 위아래 배치로 변경 */
+        .form-row-date {
+            display: flex; gap: 8px; flex-direction: column;
+        }
         .form-group-date { 
-            flex: none !important; 
-            width: 130px !important; 
+            width: 100%; 
         }
         
-        label { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: #4a5568; }
+        label { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: #4a5568; word-break: keep-all; }
         
+        /* 📱 큰 글자 크기 대응: 고정 높이를 최소 높이(min-height)로 변경하여 글자가 커지면 상자도 늘어나도록 수정 */
         input[type="text"], input[type="date"], input[type="number"], textarea { 
-            width: 100%; height: 34px; padding: 0 8px; font-size: 13px; 
+            width: 100%; min-height: 36px; padding: 6px 8px; font-size: 13px; 
             border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; 
             background-color: #f8fafc;
         }
         input:focus, textarea:focus { outline: none; border-color: #3182ce; background-color: white; }
-        textarea { height: 44px; padding: 6px 8px; resize: none; line-height: 1.3; }
+        textarea { height: 46px; resize: none; line-height: 1.3; }
 
         .checkbox-wrap { 
             display: flex; gap: 6px; align-items: center; justify-content: center;
-            height: 34px; background: #f8fafc; padding: 0 6px; 
-            border: 1px solid #cbd5e1; border-radius: 6px; 
+            min-height: 36px; background: #f8fafc; padding: 6px; 
+            border: 1px solid #cbd5e1; border-radius: 6px; flex-wrap: wrap;
         }
         .checkbox-wrap label { 
             font-size: 11px; font-weight: 600; color: #2d3748; 
@@ -58,7 +61,7 @@
         .checkbox-wrap input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; margin: 0; }
 
         .button-group { display: flex; gap: 8px; margin-top: 2px; }
-        button { height: 36px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        button { min-height: 38px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .btn-add { background-color: #3182ce; color: white; flex: 2; }
         .btn-clear { background-color: #e2e8f0; color: #4a5568; flex: 0.5; }
 
@@ -70,8 +73,9 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px;
             background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02); cursor: pointer;
+            flex-wrap: wrap; gap: 6px;
         }
-        .card-main { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .card-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 200px; }
         .card-header-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .card-title { font-size: 12px; font-weight: 700; color: #1a202c; }
         
@@ -81,9 +85,9 @@
         .badge-none { background-color: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
 
         .card-meta { font-size: 11px; color: #718096; }
-        .card-memo { font-size: 11px; color: #4a5568; background: #edf2f7; padding: 2px 5px; border-radius: 4px; margin-top: 1px; display: inline-block; max-width: 90%; }
+        .card-memo { font-size: 11px; color: #4a5568; background: #edf2f7; padding: 2px 5px; border-radius: 4px; margin-top: 1px; display: inline-block; max-width: 100%; }
         
-        .card-right { display: flex; align-items: center; gap: 6px; }
+        .card-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
         .d-day-badge { font-size: 11px; font-weight: bold; padding: 3px 5px; border-radius: 4px; text-align: center; min-width: 40px; }
         .btn-delete { width: 36px; height: 26px; background: #fed7d7; color: #e53e3e; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; }
         
@@ -105,6 +109,10 @@
             }
             .my-location-btn { bottom: 20px; right: 20px; }
             .form-container { gap: 10px; margin-bottom: 15px; }
+            
+            /* 태블릿 및 PC 환경에서는 가로 배치로 복귀 */
+            .form-row-date { flex-direction: row; }
+            .form-group-date { width: auto; flex: 1; }
         }
     </style>
 </head>
@@ -135,7 +143,7 @@
                     <input type="number" id="radius" value="500">
                 </div>
             </div>
-            <div class="form-row">
+            <div class="form-row form-row-date">
                 <div class="form-group form-group-date"><label>신청 날짜</label><input type="date" id="app-date"></div>
                 <div class="form-group form-group-date"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
             </div>
@@ -148,7 +156,7 @@
         </div>
         
         <div class="button-group">
-            <button class="btn-add" onclick="addNewLocation()">✅ 날짜 칸 축소 적용 버전</button>
+            <button class="btn-add" onclick="addNewLocation()">✅ 글자 크기 대응 완료 버전</button>
             <button class="btn-clear" onclick="clearInputs()">비우기</button>
         </div>
 
