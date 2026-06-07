@@ -18,26 +18,20 @@
             width: 100%; height: 100dvh; z-index: 1; position: absolute; top: 0; left: 0;
         }
         
-        /* 📱 우측에서 스르륵 나오는 서랍(Drawer) 패널 */
-        .dashboard-panel { 
+        /* 🔥 서랍 전체를 감싸는 껍데기 (얘가 통째로 움직임) */
+        .sidebar-wrapper {
             position: absolute; top: 0; right: 0; 
             width: 360px; max-width: 85vw; height: 100dvh; 
-            background-color: rgba(255, 255, 255, 0.92); /* 살짝 투명하게 */
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); /* 아이폰 고급 블러 효과 */
-            padding: 20px 15px calc(20px + env(safe-area-inset-bottom)) 15px; 
-            box-sizing: border-box; z-index: 1001; overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            box-shadow: -4px 0 24px rgba(0,0,0,0.15);
-            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* 쫀득한 슬라이드 애니메이션 */
-            display: flex; flex-direction: column;
+            z-index: 1001;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        /* 숨김 상태 (오른쪽 화면 밖으로 100% 이동) */
-        .dashboard-panel.hidden {
+        
+        /* 숨김 상태 클래스 */
+        .sidebar-wrapper.hidden {
             transform: translateX(100%);
         }
 
-        /* 🔘 패널에 딱 붙어서 같이 움직이는 열기/닫기 손잡이 버튼 */
+        /* 🔘 잘리지 않고 무사히 살아남은 문손잡이 버튼 */
         .toggle-btn {
             position: absolute; top: 40px; left: -44px; z-index: 1002;
             width: 44px; height: 48px; background: #3182ce; color: white; 
@@ -45,7 +39,19 @@
             box-shadow: -2px 2px 8px rgba(0,0,0,0.2); border: none; font-size: 18px; cursor: pointer;
         }
 
-        /* 📍 내 위치 버튼 (패널에 가려지지 않도록 왼쪽 아래로 이동) */
+        /* 📱 실제 내용물이 들어가는 패널 (스크롤은 여기서만 발생) */
+        .dashboard-panel { 
+            width: 100%; height: 100%; 
+            background-color: rgba(255, 255, 255, 0.92); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+            padding: 20px 15px calc(20px + env(safe-area-inset-bottom)) 15px; 
+            box-sizing: border-box; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column;
+        }
+
+        /* 📍 내 위치 버튼 (화면 왼쪽 아래 고정) */
         .my-location-btn {
             position: absolute; bottom: 30px; left: 20px; z-index: 1000;
             width: 44px; height: 44px; background: white; border-radius: 50%;
@@ -54,7 +60,7 @@
         }
         .my-location-dot { width: 12px; height: 12px; background-color: #3182ce; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
 
-        /* --- 입력 폼 스타일 (초슬림 UI 유지) --- */
+        /* --- 폼 스타일 --- */
         .form-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex: none; }
         .form-row { display: flex; gap: 8px; align-items: flex-start; }
         .form-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -77,7 +83,7 @@
         .btn-add { background-color: #3182ce; color: white; flex: 2; }
         .btn-clear { background-color: #e2e8f0; color: #4a5568; flex: 0.5; }
 
-        /* --- 리스트 영역이 세로로 시원하게 늘어남 --- */
+        /* --- 리스트 영역 --- */
         .list-section { border-top: 1px solid #e2e8f0; margin-top: 15px; padding-top: 12px; flex: 1; overflow-y: visible; }
         .list-title { font-size: 13px; font-weight: 700; color: #2d3748; margin-bottom: 10px; }
         #location-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
@@ -103,7 +109,6 @@
         .d-day-badge { font-size: 11px; font-weight: bold; padding: 4px 6px; border-radius: 4px; text-align: center; min-width: 40px; }
         .btn-delete { width: 36px; height: 28px; background: #fed7d7; color: #e53e3e; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; }
 
-        /* 팝업 말풍선 디자인 다듬기 */
         .leaflet-popup-content-wrapper { border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
         .leaflet-popup-content { margin: 14px; line-height: 1.6; }
     </style>
@@ -114,58 +119,60 @@
         <button class="my-location-btn" onclick="goToMyLocation()">📍</button>
     </div>
     
-    <div class="dashboard-panel" id="dashboard-panel">
+    <div class="sidebar-wrapper" id="sidebar-wrapper">
         <button class="toggle-btn" id="toggle-btn" onclick="togglePanel()">▶️</button>
 
-        <div class="form-container">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>드론 원스톱 좌표 일괄 붙여넣기</label>
-                    <textarea id="bulk-coords" placeholder="좌표를 붙여넣으세요"></textarea>
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group" style="flex: 2;">
-                    <label>승인 종류</label>
-                    <div class="checkbox-wrap">
-                        <label><input type="checkbox" id="chk-flight" checked> ✈️ 비행</label>
-                        <label><input type="checkbox" id="chk-photo" checked> 📷 촬영</label>
+        <div class="dashboard-panel">
+            <div class="form-container">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>드론 원스톱 좌표 일괄 붙여넣기</label>
+                        <textarea id="bulk-coords" placeholder="좌표를 붙여넣으세요"></textarea>
                     </div>
                 </div>
-                <div class="form-group" style="flex: 1; max-width: 80px;">
-                    <label>반경(m)</label>
-                    <input type="number" id="radius" value="500">
+                
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>승인 종류</label>
+                        <div class="checkbox-wrap">
+                            <label><input type="checkbox" id="chk-flight" checked> ✈️ 비행</label>
+                            <label><input type="checkbox" id="chk-photo" checked> 📷 촬영</label>
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex: 1; max-width: 80px;">
+                        <label>반경(m)</label>
+                        <input type="number" id="radius" value="500">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group" style="padding-right: 4px;">
+                        <label>신청 날짜</label>
+                        <input type="date" id="app-date" style="border-width: 2px; border-color: #a0aec0;">
+                    </div>
+                    <div class="form-group" style="padding-left: 4px;">
+                        <label>만료 날짜</label>
+                        <input type="date" id="expiry-date" style="border-width: 2px; border-color: #a0aec0;">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>메모 (특이사항)</label>
+                        <input type="text" id="memo" placeholder="예: 인근 군사시설 고도 제한">
+                    </div>
                 </div>
             </div>
             
-            <div class="form-row">
-                <div class="form-group" style="padding-right: 4px;">
-                    <label>신청 날짜</label>
-                    <input type="date" id="app-date" style="border-width: 2px; border-color: #a0aec0;">
-                </div>
-                <div class="form-group" style="padding-left: 4px;">
-                    <label>만료 날짜</label>
-                    <input type="date" id="expiry-date" style="border-width: 2px; border-color: #a0aec0;">
-                </div>
+            <div class="button-group">
+                <button class="action-btn btn-add" onclick="addNewLocation()">✅ 손잡이 복구 완료</button>
+                <button class="action-btn btn-clear" onclick="clearInputs()">비우기</button>
             </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label>메모 (특이사항)</label>
-                    <input type="text" id="memo" placeholder="예: 인근 군사시설 고도 제한">
-                </div>
-            </div>
-        </div>
-        
-        <div class="button-group">
-            <button class="action-btn btn-add" onclick="addNewLocation()">✅ 측면 서랍장 적용 완료</button>
-            <button class="action-btn btn-clear" onclick="clearInputs()">비우기</button>
-        </div>
 
-        <div class="list-section">
-            <div class="list-title">📋 관리 내역</div>
-            <div id="location-list"></div>
+            <div class="list-section">
+                <div class="list-title">📋 관리 내역</div>
+                <div id="location-list"></div>
+            </div>
         </div>
     </div>
 
@@ -184,19 +191,19 @@
             crs: L.CRS.EPSG3857, opacity: 0.4
         }).addTo(map);
 
-        // 🔥 패널 스르륵 열고 닫는 마법의 로직
         var isPanelHidden = false;
         function togglePanel() {
             isPanelHidden = !isPanelHidden;
-            var panel = document.getElementById('dashboard-panel');
+            // 패널 내용물이 아니라 껍데기를 움직입니다.
+            var wrapper = document.getElementById('sidebar-wrapper');
             var btn = document.getElementById('toggle-btn');
             
             if(isPanelHidden) {
-                panel.classList.add('hidden');
-                btn.innerHTML = '◀️'; // 닫혔을 땐 왼쪽을 가리켜서 당기게 유도
+                wrapper.classList.add('hidden');
+                btn.innerHTML = '◀️'; 
             } else {
-                panel.classList.remove('hidden');
-                btn.innerHTML = '▶️'; // 열렸을 땐 오른쪽을 가리켜서 밀어넣게 유도
+                wrapper.classList.remove('hidden');
+                btn.innerHTML = '▶️'; 
             }
         }
 
@@ -313,7 +320,6 @@
                     color: '#3182ce', fillColor: '#3182ce', fillOpacity: 0.15, radius: loc.radius
                 }).addTo(map);
                 
-                // 🔥 지도 클릭 시 나오는 말풍선 팝업 기능!
                 var popupContent = `
                     <div style="font-family: sans-serif; font-size: 13px; color: #1a202c;">
                         <b style="color: #2b6cb0;">${loc.isFlight ? '✈️ 비행' : ''} ${loc.isPhoto ? '📷 촬영' : ''} 승인구역</b><br>
