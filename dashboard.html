@@ -14,13 +14,12 @@
             overflow: hidden;
         }
 
-        /* 🔥 지도 비율 35% -> 45% 로 대폭 확대 */
+        /* 지도는 시원하게 45% 유지 */
         #map { 
             flex: none; height: 45dvh; width: 100%; z-index: 1; 
             border-bottom: 2px solid #e2e8f0; position: relative; 
         }
         
-        /* 🔥 하단 패널 비율 65% -> 55% 로 축소 (지도를 키우기 위함) */
         .dashboard-panel { 
             flex: none; height: 55dvh; width: 100%; background-color: white; 
             padding: 12px 12px calc(20px + env(safe-area-inset-bottom)) 12px; 
@@ -29,19 +28,18 @@
         }
         
         .form-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        .form-row { display: flex; gap: 8px; align-items: flex-start; }
+        
+        /* 🔥 가로로 나열되는 모든 줄에 100% 너비 강제 적용 */
+        .form-row { display: flex; gap: 8px; width: 100%; align-items: flex-start; }
+        
+        /* 🔥 가장 중요한 핵심 방어막: min-width: 0 */
+        /* 내부 콘텐츠가 커져도 5:5 비율을 절대 깨지 못하게 만듦 */
         .form-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         
-        /* 🔥 날짜 칸이 옆으로 뚱뚱하게 늘어나지 않도록 강제 고정 */
-        .form-group-date {
-            flex: none !important;
-            width: 140px; 
-        }
-        
-        label { font-size: 11px; font-weight: 700; margin-bottom: 3px; color: #4a5568; }
+        label { font-size: 11px; font-weight: 700; margin-bottom: 3px; color: #4a5568; white-space: nowrap; }
         
         input[type="text"], input[type="date"], input[type="number"], textarea { 
-            width: 100%; height: 32px; padding: 0 6px; font-size: 13px; 
+            width: 100%; height: 32px; padding: 0 4px; font-size: 13px; 
             border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; 
             background-color: #f8fafc; color: #1a202c;
         }
@@ -96,7 +94,6 @@
         }
         .my-location-dot { width: 10px; height: 10px; background-color: #3182ce; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
 
-        /* 💻 아이패드 프로 & 맥북 대응 */
         @media (min-width: 768px) {
             body { flex-direction: row; } 
             #map { flex: 1; height: 100dvh; border-bottom: none; border-right: 1px solid #cbd5e1; }
@@ -120,7 +117,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>드론 원스톱 좌표 일괄 붙여넣기</label>
-                    <textarea id="bulk-coords" placeholder="좌표 텍스트를 붙여넣으세요."></textarea>
+                    <textarea id="bulk-coords" placeholder="좌표를 붙여넣으세요"></textarea>
                 </div>
             </div>
             
@@ -139,8 +136,8 @@
             </div>
             
             <div class="form-row">
-                <div class="form-group form-group-date"><label>신청 날짜</label><input type="date" id="app-date"></div>
-                <div class="form-group form-group-date"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
+                <div class="form-group"><label>신청 날짜</label><input type="date" id="app-date"></div>
+                <div class="form-group"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
             </div>
             
             <div class="form-row">
@@ -152,7 +149,7 @@
         </div>
         
         <div class="button-group">
-            <button class="btn-add" onclick="addNewLocation()">✅ 지도 45% 확대 & 날짜 칸 축소</button>
+            <button class="btn-add" onclick="addNewLocation()">✅ 날짜 겹침 최종 해결</button>
             <button class="btn-clear" onclick="clearInputs()">비우기</button>
         </div>
 
@@ -309,7 +306,7 @@
                 <div class="location-card" onclick="moveToLoc(${loc.lat}, ${loc.lng})">
                     <div class="card-main">
                         <div class="card-header-row">
-                            <span class="card-title">신 구역 ${index + 1} (${loc.radius}m)</span>
+                            <span class="card-title">신청 구역 ${index + 1} (${loc.radius}m)</span>
                             <div class="badges">${badgesHtml}</div>
                         </div>
                         <div class="card-meta">📅 신청: ${loc.appDate} | ⏳ 만료: ${loc.expiry}</div>
