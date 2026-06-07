@@ -14,38 +14,40 @@
             overflow: hidden;
         }
 
+        /* 🔥 지도 비율 35% -> 45% 로 대폭 확대 */
         #map { 
-            flex: none; height: 35dvh; width: 100%; z-index: 1; 
+            flex: none; height: 45dvh; width: 100%; z-index: 1; 
             border-bottom: 2px solid #e2e8f0; position: relative; 
         }
         
+        /* 🔥 하단 패널 비율 65% -> 55% 로 축소 (지도를 키우기 위함) */
         .dashboard-panel { 
-            flex: none; height: 65dvh; width: 100%; background-color: white; 
-            /* 여백 최소화 */
+            flex: none; height: 55dvh; width: 100%; background-color: white; 
             padding: 12px 12px calc(20px + env(safe-area-inset-bottom)) 12px; 
             box-sizing: border-box; z-index: 2; overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
         
-        /* 폼 요소 간격 최소화 */
         .form-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .form-row { display: flex; gap: 8px; align-items: flex-start; }
-        /* flex: 1을 주어 남는 공간을 균등하게 나눠 가짐 */
         .form-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        
+        /* 🔥 날짜 칸이 옆으로 뚱뚱하게 늘어나지 않도록 강제 고정 */
+        .form-group-date {
+            flex: none !important;
+            width: 140px; 
+        }
         
         label { font-size: 11px; font-weight: 700; margin-bottom: 3px; color: #4a5568; }
         
-        /* 입력칸 높이 초슬림화 (32px), 둥글기 축소 (4px) */
         input[type="text"], input[type="date"], input[type="number"], textarea { 
             width: 100%; height: 32px; padding: 0 6px; font-size: 13px; 
             border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; 
             background-color: #f8fafc; color: #1a202c;
         }
         input:focus, textarea:focus { outline: none; border-color: #3182ce; background-color: white; }
-        /* 텍스트 영역 높이 바짝 줄임 */
         textarea { height: 34px; padding: 8px 6px; resize: none; line-height: 1.2; }
 
-        /* 체크박스 불필요한 테두리 및 배경 제거 (깔끔하게 텍스트처럼) */
         .checkbox-wrap { 
             display: flex; gap: 12px; align-items: center; justify-content: flex-start;
             height: 32px; padding: 0 2px;
@@ -118,7 +120,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>드론 원스톱 좌표 일괄 붙여넣기</label>
-                    <textarea id="bulk-coords" placeholder="좌표를 붙여넣으세요"></textarea>
+                    <textarea id="bulk-coords" placeholder="좌표 텍스트를 붙여넣으세요."></textarea>
                 </div>
             </div>
             
@@ -137,9 +139,8 @@
             </div>
             
             <div class="form-row">
-                <!-- flex: 1을 통해 신청일/만료일이 모바일에서도 5:5 비율로 정확히 나란히 배치됨 -->
-                <div class="form-group"><label>신청 날짜</label><input type="date" id="app-date"></div>
-                <div class="form-group"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
+                <div class="form-group form-group-date"><label>신청 날짜</label><input type="date" id="app-date"></div>
+                <div class="form-group form-group-date"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
             </div>
             
             <div class="form-row">
@@ -151,7 +152,7 @@
         </div>
         
         <div class="button-group">
-            <button class="btn-add" onclick="addNewLocation()">✅ 초슬림 UI 디자인 적용</button>
+            <button class="btn-add" onclick="addNewLocation()">✅ 지도 45% 확대 & 날짜 칸 축소</button>
             <button class="btn-clear" onclick="clearInputs()">비우기</button>
         </div>
 
@@ -308,7 +309,7 @@
                 <div class="location-card" onclick="moveToLoc(${loc.lat}, ${loc.lng})">
                     <div class="card-main">
                         <div class="card-header-row">
-                            <span class="card-title">신청 구역 ${index + 1} (${loc.radius}m)</span>
+                            <span class="card-title">신 구역 ${index + 1} (${loc.radius}m)</span>
                             <div class="badges">${badgesHtml}</div>
                         </div>
                         <div class="card-meta">📅 신청: ${loc.appDate} | ⏳ 만료: ${loc.expiry}</div>
