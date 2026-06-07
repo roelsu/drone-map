@@ -6,6 +6,9 @@
     <title>드론 비행 통합 관리 대시보드</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
     <style>
         html, body { 
             margin: 0; padding: 0; width: 100%; height: 100dvh; 
@@ -157,7 +160,7 @@
             </div>
             
             <div class="button-group">
-                <button class="action-btn btn-add" onclick="addNewLocation()">✅ 날짜 칸 맞춤 완료</button>
+                <button class="action-btn btn-add" onclick="addNewLocation()">✅ 실시간 클라우드 동기화 저장</button>
                 <button class="action-btn btn-clear" onclick="clearInputs()">비우기</button>
             </div>
 
@@ -170,6 +173,25 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // =================================================================
+        // 🛠️ [필수 설정] 파이어베이스 콘솔에서 복사한 고유 설정값을 여기에 넣으세요!
+        // =================================================================
+        var firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // 파이어베이스 초기화
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+        var locationsRef = database.ref('drone_locations');
+        // =================================================================
+
         var map = L.map('map', { zoomControl: false }).setView([37.5500, 126.9000], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
@@ -198,14 +220,24 @@
             }
         }
 
-        var locations = JSON.parse(localStorage.getItem('drone_dashboard_locs')) || [];
+        var locations = [];
         var circleLayers = [];
         var myLocationMarker;
         var myCurrentLatLng = null;
         var isFirstLocation = true;
 
-        window.onload = function() {
+        // 🔥 로컬 스토리지 대신 파이어베이스에서 실시간으로 데이터를 수신하여 동기화
+        locationsRef.on('value', function(snapshot) {
+            locations = [];
+            snapshot.forEach(function(childSnapshot) {
+                var data = childSnapshot.val();
+                data.fbKey = childSnapshot.key; // 삭제 처리를 위해 파이어베이스 고유 키 저장
+                locations.push(data);
+            });
             renderAll();
+        });
+
+        window.onload = function() {
             map.locate({ watch: true, setView: false, enableHighAccuracy: true });
         };
 
@@ -269,8 +301,8 @@
             if (coords.length === 0) return alert("유효한 대한민국 좌표를 찾지 못했습니다.");
 
             coords.forEach(coord => {
-                locations.push({
-                    id: Date.now() + Math.random(),
+                // 🔥 로컬 배열 대신 파이어베이스 데이터베이스로 업로드
+                locationsRef.push({
                     lat: coord.lat, lng: coord.lng, radius: radVal,
                     isFlight: isFlight, isPhoto: isPhoto,
                     appDate: appVal || "-", expiry: expVal,
@@ -278,7 +310,6 @@
                 });
             });
 
-            saveAndRender();
             var lastCoord = coords[coords.length - 1];
             map.flyTo([lastCoord.lat, lastCoord.lng], 13);
             clearInputs();
@@ -292,11 +323,6 @@
             document.getElementById('expiry-date').value = '';
             document.getElementById('radius').value = '500';
             document.getElementById('memo').value = '';
-        }
-
-        function saveAndRender() {
-            localStorage.setItem('drone_dashboard_locs', JSON.stringify(locations));
-            renderAll();
         }
 
         function renderAll() {
@@ -347,7 +373,7 @@
                     </div>
                     <div class="card-right" onclick="event.stopPropagation();">
                         <div class="d-day-badge" style="background-color: ${badgeColor}; color: ${textColor};">${dText}</div>
-                        <button class="btn-delete" onclick="deleteLoc(${loc.id})">삭제</button>
+                        <button class="btn-delete" onclick="deleteLoc('${loc.fbKey}')">삭제</button>
                     </div>
                 </div>`;
             });
@@ -356,7 +382,13 @@
         }
 
         function moveToLoc(lat, lng) { map.flyTo([lat, lng], 14); }
-        function deleteLoc(id) { locations = locations.filter(l => l.id !== id); saveAndRender(); }
+        
+        // 🔥 파이어베이스 노드 삭제 함수
+        function deleteLoc(fbKey) { 
+            if(confirm("이 승인 구역을 삭제하시겠습니까? 모든 기기에서 즉시 삭제됩니다.")) {
+                locationsRef.child(fbKey).remove(); 
+            }
+        }
     </script>
 </body>
 </html>
