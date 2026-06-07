@@ -4,24 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>드론 비행 통합 관리 대시보드</title>
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script> <style>
-        /* 기존 CSS 생략 (레이아웃 유지) */
-        html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; font-family: -apple-system, sans-serif; background-color: #f5f7fa; overflow: hidden; position: relative; }
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; font-family: -apple-system, sans-serif; background-color: #f5f7fa; overflow: hidden; }
         #map { width: 100%; height: 100dvh; z-index: 1; position: absolute; }
-        .sidebar-wrapper { position: absolute; top: 0; right: 0; width: 360px; height: 100dvh; z-index: 1001; transition: transform 0.35s; }
+        .sidebar-wrapper { position: absolute; top: 0; right: 0; width: 360px; max-width: 90vw; height: 100dvh; z-index: 1001; transition: transform 0.35s; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
         .sidebar-wrapper.hidden { transform: translateX(100%); }
-        .toggle-btn { position: absolute; top: 40px; left: -44px; z-index: 1002; width: 44px; height: 48px; background: #3182ce; color: white; border-radius: 12px 0 0 12px; border: none; cursor: pointer; }
-        .dashboard-panel { width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        input[type="text"], input[type="number"], .flatpickr-input { width: 100%; height: 34px; padding: 0 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: white; }
-        .form-group { display: flex; flex-direction: column; margin-bottom: 10px; }
+        .toggle-btn { position: absolute; top: 40px; left: -44px; z-index: 1002; width: 44px; height: 48px; background: #3182ce; color: white; border-radius: 12px 0 0 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .dashboard-panel { width: 100%; height: 100%; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .form-group { margin-bottom: 12px; }
+        label { font-size: 12px; font-weight: 700; color: #4a5568; display: block; margin-bottom: 4px; }
+        textarea, .flatpickr-input, input[type="text"], input[type="number"] { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: #f8fafc; }
         .btn-add { background-color: #3182ce; color: white; width: 100%; height: 45px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .location-card { border: 1px solid #e2e8f0; padding: 10px; margin-top: 10px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -30,21 +30,23 @@
         <button class="toggle-btn" id="toggle-btn" onclick="togglePanel()">▶️</button>
         <div class="dashboard-panel">
             <div class="form-group">
+                <label>좌표 붙여넣기</label>
+                <textarea id="bulk-coords" placeholder="좌표를 붙여넣으세요"></textarea>
+            </div>
+            <div class="form-group">
                 <label>신청 날짜</label>
-                <input type="text" id="app-date" placeholder="클릭해서 날짜 선택">
+                <input type="text" id="app-date" class="flatpickr-input">
             </div>
             <div class="form-group">
                 <label>만료 날짜</label>
-                <input type="text" id="expiry-date" placeholder="클릭해서 날짜 선택">
+                <input type="text" id="expiry-date" class="flatpickr-input">
             </div>
-            <button class="btn-add" onclick="addNewLocation()">✅ 등록 및 클라우드 저장</button>
+            <button class="btn-add" onclick="addNewLocation()">✅ 등록</button>
             <div id="location-list"></div>
         </div>
     </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 파이어베이스 설정 (아까 수정한 싱가포르 주소 그대로 사용!)
         var firebaseConfig = {
             apiKey: "AIzaSyCQlcMwNfPicDN5AYLKZ9G0a7sc7Oc2d4E",
             authDomain: "drone-map-3aae0.firebaseapp.com",
@@ -53,17 +55,38 @@
         };
         firebase.initializeApp(firebaseConfig);
         var locationsRef = firebase.database().ref('drone_locations');
-
-        // 휠 달력 초기화
-        flatpickr("#app-date", { locale: "ko", dateFormat: "Y-m-d" });
-        flatpickr("#expiry-date", { locale: "ko", dateFormat: "Y-m-d" });
-
-        // (이하 기존 지도 로직 및 나머지 함수들 동일)
+        
         var map = L.map('map', { zoomControl: false }).setView([37.5500, 126.9000], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        function togglePanel() { /* 생략 */ }
-        function addNewLocation() { /* 기존 로직 동일 */ }
+        flatpickr("#app-date", { locale: "ko", dateFormat: "Y-m-d" });
+        flatpickr("#expiry-date", { locale: "ko", dateFormat: "Y-m-d" });
+
+        var isPanelHidden = false;
+        function togglePanel() {
+            isPanelHidden = !isPanelHidden;
+            var wrapper = document.getElementById('sidebar-wrapper');
+            wrapper.classList.toggle('hidden', isPanelHidden);
+            document.getElementById('toggle-btn').innerHTML = isPanelHidden ? '◀️' : '▶️';
+        }
+
+        function addNewLocation() {
+            var text = document.getElementById('bulk-coords').value;
+            var appDate = document.getElementById('app-date').value;
+            var expDate = document.getElementById('expiry-date').value;
+            if(!text || !expDate) return alert("내용을 입력하세요!");
+            locationsRef.push({ coords: text, appDate, expiry: expDate });
+            alert("저장 완료!");
+        }
+
+        locationsRef.on('value', function(snapshot) {
+            var listHtml = "";
+            snapshot.forEach(child => {
+                var data = child.val();
+                listHtml += `<div class="location-card">만료: ${data.expiry}</div>`;
+            });
+            document.getElementById('location-list').innerHTML = listHtml;
+        });
     </script>
 </body>
 </html>
