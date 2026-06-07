@@ -21,78 +21,73 @@
         
         .dashboard-panel { 
             flex: none; height: 65dvh; width: 100%; background-color: white; 
-            padding: 12px 15px calc(25px + env(safe-area-inset-bottom)) 15px; 
+            /* 여백 최소화 */
+            padding: 12px 12px calc(20px + env(safe-area-inset-bottom)) 12px; 
             box-sizing: border-box; z-index: 2; overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
         
+        /* 폼 요소 간격 최소화 */
         .form-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        .form-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
-        .form-group { flex: 1; min-width: 120px; display: flex; flex-direction: column; }
+        .form-row { display: flex; gap: 8px; align-items: flex-start; }
+        /* flex: 1을 주어 남는 공간을 균등하게 나눠 가짐 */
+        .form-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         
-        /* 📱 큰 글자 크기 대응: 모바일에서는 날짜 행을 위아래 배치로 변경 */
-        .form-row-date {
-            display: flex; gap: 8px; flex-direction: column;
-        }
-        .form-group-date { 
-            width: 100%; 
-        }
+        label { font-size: 11px; font-weight: 700; margin-bottom: 3px; color: #4a5568; }
         
-        label { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: #4a5568; word-break: keep-all; }
-        
-        /* 📱 큰 글자 크기 대응: 고정 높이를 최소 높이(min-height)로 변경하여 글자가 커지면 상자도 늘어나도록 수정 */
+        /* 입력칸 높이 초슬림화 (32px), 둥글기 축소 (4px) */
         input[type="text"], input[type="date"], input[type="number"], textarea { 
-            width: 100%; min-height: 36px; padding: 6px 8px; font-size: 13px; 
-            border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; 
-            background-color: #f8fafc;
+            width: 100%; height: 32px; padding: 0 6px; font-size: 13px; 
+            border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; 
+            background-color: #f8fafc; color: #1a202c;
         }
         input:focus, textarea:focus { outline: none; border-color: #3182ce; background-color: white; }
-        textarea { height: 46px; resize: none; line-height: 1.3; }
+        /* 텍스트 영역 높이 바짝 줄임 */
+        textarea { height: 34px; padding: 8px 6px; resize: none; line-height: 1.2; }
 
+        /* 체크박스 불필요한 테두리 및 배경 제거 (깔끔하게 텍스트처럼) */
         .checkbox-wrap { 
-            display: flex; gap: 6px; align-items: center; justify-content: center;
-            min-height: 36px; background: #f8fafc; padding: 6px; 
-            border: 1px solid #cbd5e1; border-radius: 6px; flex-wrap: wrap;
+            display: flex; gap: 12px; align-items: center; justify-content: flex-start;
+            height: 32px; padding: 0 2px;
         }
         .checkbox-wrap label { 
-            font-size: 11px; font-weight: 600; color: #2d3748; 
-            display: flex; align-items: center; gap: 3px; cursor: pointer; margin: 0; 
+            font-size: 12px; font-weight: 600; color: #2d3748; 
+            display: flex; align-items: center; gap: 4px; cursor: pointer; margin: 0; 
         }
-        .checkbox-wrap input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; margin: 0; }
+        .checkbox-wrap input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; margin: 0; }
 
-        .button-group { display: flex; gap: 8px; margin-top: 2px; }
-        button { min-height: 38px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .button-group { display: flex; gap: 8px; margin-top: 0; }
+        button { height: 36px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .btn-add { background-color: #3182ce; color: white; flex: 2; }
         .btn-clear { background-color: #e2e8f0; color: #4a5568; flex: 0.5; }
 
         .list-section { border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 10px; }
-        .list-title { font-size: 12px; font-weight: 700; color: #2d3748; margin-bottom: 6px; }
+        .list-title { font-size: 12px; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
         #location-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 15px; }
         
         .location-card {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px;
-            background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02); cursor: pointer;
-            flex-wrap: wrap; gap: 6px;
+            padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px;
+            background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.02); cursor: pointer;
         }
-        .card-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 200px; }
+        .card-main { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
         .card-header-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .card-title { font-size: 12px; font-weight: 700; color: #1a202c; }
+        .card-title { font-size: 12px; font-weight: 700; color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .type-badge { display: inline-block; padding: 1px 4px; border-radius: 3px; font-size: 9px; font-weight: bold; }
+        .type-badge { display: inline-block; padding: 2px 4px; border-radius: 3px; font-size: 10px; font-weight: bold; }
         .badge-flight { background-color: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
         .badge-photo { background-color: #f0fff4; color: #2f855a; border: 1px solid #c6f6d5; }
         .badge-none { background-color: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
 
         .card-meta { font-size: 11px; color: #718096; }
-        .card-memo { font-size: 11px; color: #4a5568; background: #edf2f7; padding: 2px 5px; border-radius: 4px; margin-top: 1px; display: inline-block; max-width: 100%; }
+        .card-memo { font-size: 11px; color: #4a5568; background: #edf2f7; padding: 2px 5px; border-radius: 3px; margin-top: 1px; display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         
         .card-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-        .d-day-badge { font-size: 11px; font-weight: bold; padding: 3px 5px; border-radius: 4px; text-align: center; min-width: 40px; }
-        .btn-delete { width: 36px; height: 26px; background: #fed7d7; color: #e53e3e; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; }
+        .d-day-badge { font-size: 11px; font-weight: bold; padding: 4px 6px; border-radius: 4px; text-align: center; min-width: 38px; }
+        .btn-delete { width: 34px; height: 26px; background: #fed7d7; color: #e53e3e; border: none; border-radius: 4px; font-weight: bold; font-size: 10px; }
         
         .my-location-btn {
-            position: absolute; bottom: 15px; right: 15px; z-index: 1000;
+            position: absolute; bottom: 12px; right: 12px; z-index: 1000;
             width: 36px; height: 36px; background: white; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: none; font-size: 16px; cursor: pointer;
@@ -104,15 +99,11 @@
             body { flex-direction: row; } 
             #map { flex: 1; height: 100dvh; border-bottom: none; border-right: 1px solid #cbd5e1; }
             .dashboard-panel { 
-                width: 350px; height: 100dvh; 
+                width: 340px; height: 100dvh; 
                 padding: 20px 15px; box-shadow: -4px 0 20px rgba(0,0,0,0.05);
             }
             .my-location-btn { bottom: 20px; right: 20px; }
             .form-container { gap: 10px; margin-bottom: 15px; }
-            
-            /* 태블릿 및 PC 환경에서는 가로 배치로 복귀 */
-            .form-row-date { flex-direction: row; }
-            .form-group-date { width: auto; flex: 1; }
         }
     </style>
 </head>
@@ -125,11 +116,12 @@
     <div class="dashboard-panel">
         <div class="form-container">
             <div class="form-row">
-                <div class="form-group" style="flex: 1;">
+                <div class="form-group">
                     <label>드론 원스톱 좌표 일괄 붙여넣기</label>
-                    <textarea id="bulk-coords" placeholder="좌표 텍스트를 붙여넣으세요."></textarea>
+                    <textarea id="bulk-coords" placeholder="좌표를 붙여넣으세요"></textarea>
                 </div>
             </div>
+            
             <div class="form-row">
                 <div class="form-group" style="flex: 2;">
                     <label>승인 종류</label>
@@ -138,15 +130,18 @@
                         <label><input type="checkbox" id="chk-photo" checked> 📷 촬영</label>
                     </div>
                 </div>
-                <div class="form-group" style="flex: 1; max-width: 75px;">
+                <div class="form-group" style="flex: 1; max-width: 80px;">
                     <label>반경(m)</label>
                     <input type="number" id="radius" value="500">
                 </div>
             </div>
-            <div class="form-row form-row-date">
-                <div class="form-group form-group-date"><label>신청 날짜</label><input type="date" id="app-date"></div>
-                <div class="form-group form-group-date"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
+            
+            <div class="form-row">
+                <!-- flex: 1을 통해 신청일/만료일이 모바일에서도 5:5 비율로 정확히 나란히 배치됨 -->
+                <div class="form-group"><label>신청 날짜</label><input type="date" id="app-date"></div>
+                <div class="form-group"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
             </div>
+            
             <div class="form-row">
                 <div class="form-group">
                     <label>메모 (특이사항)</label>
@@ -156,7 +151,7 @@
         </div>
         
         <div class="button-group">
-            <button class="btn-add" onclick="addNewLocation()">✅ 글자 크기 대응 완료 버전</button>
+            <button class="btn-add" onclick="addNewLocation()">✅ 초슬림 UI 디자인 적용</button>
             <button class="btn-clear" onclick="clearInputs()">비우기</button>
         </div>
 
