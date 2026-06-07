@@ -11,57 +11,44 @@
     
     <style>
         html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; font-family: -apple-system, sans-serif; background-color: #f5f7fa; overflow: hidden; position: relative; }
-        #map { width: 100%; height: 100dvh; z-index: 1; position: absolute; top: 0; left: 0; }
-        
-        .sidebar-wrapper { position: absolute; top: 0; right: 0; width: 360px; max-width: 85vw; height: 100dvh; z-index: 1001; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+        #map { width: 100%; height: 100dvh; z-index: 1; position: absolute; }
+        .sidebar-wrapper { position: absolute; top: 0; right: 0; width: 360px; max-width: 85vw; height: 100dvh; z-index: 1001; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
         .sidebar-wrapper.hidden { transform: translateX(100%); }
-        .toggle-btn { position: absolute; top: 40px; left: -44px; z-index: 1002; width: 44px; height: 48px; background: #3182ce; color: white; border-radius: 12px 0 0 12px; display: flex; align-items: center; justify-content: center; box-shadow: -2px 2px 8px rgba(0,0,0,0.2); border: none; font-size: 18px; cursor: pointer; }
-        .dashboard-panel { width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); padding: 20px 15px; box-sizing: border-box; overflow-y: auto; box-shadow: -4px 0 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; }
-        .my-location-btn { position: absolute; bottom: 30px; left: 20px; z-index: 1000; width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: none; font-size: 20px; cursor: pointer; }
-        
-        .form-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        .form-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
-        .form-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-        label { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: #4a5568; }
-        input, textarea { width: 100%; height: 34px; padding: 0 8px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: #f8fafc; }
-        textarea { height: 40px; padding: 8px; }
-        .checkbox-wrap { display: flex; gap: 12px; align-items: center; height: 34px; }
-        .btn-add { background-color: #3182ce; color: white; height: 40px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 2; }
-        .btn-clear { background-color: #e2e8f0; color: #4a5568; height: 40px; border: none; border-radius: 6px; flex: 0.5; }
-        
-        .location-card { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; margin-bottom: 8px; }
-        .btn-delete { width: 36px; height: 28px; background: #fed7d7; color: #e53e3e; border: none; border-radius: 4px; font-size: 11px; }
+        .toggle-btn { position: absolute; top: 40px; left: -44px; z-index: 1002; width: 44px; height: 48px; background: #3182ce; color: white; border-radius: 12px 0 0 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .dashboard-panel { width: 100%; height: 100%; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .form-group { margin-bottom: 12px; }
+        label { font-size: 11px; font-weight: 700; color: #4a5568; margin-bottom: 4px; display: block; }
+        textarea, input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; }
+        .checkbox-wrap { display: flex; gap: 15px; margin-bottom: 10px; font-size: 12px; font-weight: 600; }
+        .btn-add { background-color: #3182ce; color: white; width: 100%; height: 45px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .location-card { border: 1px solid #e2e8f0; padding: 10px; margin-top: 10px; border-radius: 6px; font-size: 12px; background: #fff; }
+        .btn-delete { background: #fed7d7; color: #e53e3e; border: none; padding: 4px 8px; border-radius: 4px; float: right; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="map"><button class="my-location-btn" onclick="goToMyLocation()">📍</button></div>
+    <div id="map"></div>
     <div class="sidebar-wrapper" id="sidebar-wrapper">
         <button class="toggle-btn" id="toggle-btn" onclick="togglePanel()">▶️</button>
         <div class="dashboard-panel">
-            <div class="form-container">
-                <div class="form-group"><label>좌표 붙여넣기</label><textarea id="bulk-coords"></textarea></div>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 2;"><label>승인 종류</label><div class="checkbox-wrap"><label><input type="checkbox" id="chk-flight" checked> 비행</label><label><input type="checkbox" id="chk-photo" checked> 촬영</label></div></div>
-                    <div class="form-group" style="flex: 1; max-width: 80px;"><label>반경(m)</label><input type="number" id="radius" value="500"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="flex: none; width: 140px;"><label>신청 날짜</label><input type="date" id="app-date"></div>
-                    <div class="form-group" style="flex: none; width: 140px;"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
-                </div>
-                <div class="form-group"><label>메모</label><input type="text" id="memo"></div>
+            <div class="form-group"><label>좌표 붙여넣기</label><textarea id="bulk-coords"></textarea></div>
+            <div class="checkbox-wrap">
+                <label><input type="checkbox" id="chk-flight" checked> ✈️ 비행</label>
+                <label><input type="checkbox" id="chk-photo" checked> 📷 촬영</label>
             </div>
-            <div class="form-row"><button class="btn-add" onclick="addNewLocation()">✅ 등록</button><button class="btn-clear" onclick="clearInputs()">비우기</button></div>
+            <div class="form-group"><label>반경(m)</label><input type="number" id="radius" value="500"></div>
+            <div class="form-group"><label>신청 날짜</label><input type="date" id="app-date"></div>
+            <div class="form-group"><label>만료 날짜</label><input type="date" id="expiry-date"></div>
+            <div class="form-group"><label>메모</label><input type="text" id="memo"></div>
+            <button class="btn-add" onclick="addNewLocation()">✅ 등록 및 지도 표시</button>
             <div id="location-list"></div>
         </div>
     </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         var firebaseConfig = { apiKey: "AIzaSyCQlcMwNfPicDN5AYLKZ9G0a7sc7Oc2d4E", authDomain: "drone-map-3aae0.firebaseapp.com", databaseURL: "https://drone-map-3aae0-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "drone-map-3aae0" };
         firebase.initializeApp(firebaseConfig);
         var locationsRef = firebase.database().ref('drone_locations');
-        
-        var map = L.map('map', { zoomControl: false }).setView([37.5500, 126.9000], 11);
+        var map = L.map('map').setView([37.5500, 126.9000], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         function togglePanel() {
@@ -71,13 +58,16 @@
         }
 
         function addNewLocation() {
-            var coords = document.getElementById('bulk-coords').value;
+            var coordsText = document.getElementById('bulk-coords').value;
+            // 좌표 자동 추출
+            var match = coordsText.match(/(\d+\.\d+).*?(\d+\.\d+)/);
+            if(!match) return alert("좌표를 찾을 수 없습니다!");
+            
             locationsRef.push({
-                coords: coords,
+                lat: match[1], lng: match[2],
                 isFlight: document.getElementById('chk-flight').checked,
                 isPhoto: document.getElementById('chk-photo').checked,
                 radius: document.getElementById('radius').value,
-                appDate: document.getElementById('app-date').value,
                 expiry: document.getElementById('expiry-date').value,
                 memo: document.getElementById('memo').value
             });
@@ -86,14 +76,15 @@
 
         locationsRef.on('value', snapshot => {
             var listHtml = "";
+            map.eachLayer(l => { if(l instanceof L.Circle) map.removeLayer(l); });
             snapshot.forEach(child => {
                 var d = child.val();
-                listHtml += `<div class="location-card"><button class="btn-delete" onclick="locationsRef.child('${child.key}').remove()">삭제</button><b>만료: ${d.expiry}</b><br>${d.memo}</div>`;
+                var icons = (d.isFlight ? "✈️" : "") + (d.isPhoto ? "📷" : "");
+                listHtml += `<div class="location-card"><button class="btn-delete" onclick="locationsRef.child('${child.key}').remove()">삭제</button><b>${icons} 만료: ${d.expiry}</b><br>${d.memo}</div>`;
+                L.circle([d.lat, d.lng], { radius: d.radius, color: '#3182ce' }).addTo(map).bindPopup(`${icons} ${d.memo}`);
             });
             document.getElementById('location-list').innerHTML = listHtml;
         });
-
-        function clearInputs() { document.getElementById('bulk-coords').value = ''; document.getElementById('app-date').value = ''; document.getElementById('expiry-date').value = ''; document.getElementById('memo').value = ''; }
     </script>
 </body>
 </html>
