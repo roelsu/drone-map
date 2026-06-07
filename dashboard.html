@@ -10,116 +10,113 @@
         html, body { 
             margin: 0; padding: 0; width: 100%; height: 100dvh; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f5f7fa; display: flex; flex-direction: column;
-            overflow: hidden;
+            background-color: #f5f7fa; overflow: hidden; position: relative;
         }
 
-        /* 🔥 flex: 1을 주어 패널이 숨겨지면 지도가 자동으로 화면을 꽉 채우게 만듦 */
+        /* 🗺️ 지도는 무조건 100% 전체 화면을 꽉 채웁니다 */
         #map { 
-            flex: 1; width: 100%; z-index: 1; 
-            border-bottom: 2px solid #e2e8f0; position: relative; 
-            transition: all 0.3s ease; /* 부드러운 애니메이션 */
+            width: 100%; height: 100dvh; z-index: 1; position: absolute; top: 0; left: 0;
         }
         
+        /* 📱 우측에서 스르륵 나오는 서랍(Drawer) 패널 */
         .dashboard-panel { 
-            flex: none; height: 55dvh; width: 100%; background-color: white; 
-            padding: 12px 12px calc(20px + env(safe-area-inset-bottom)) 12px; 
-            box-sizing: border-box; z-index: 2; overflow-y: auto;
+            position: absolute; top: 0; right: 0; 
+            width: 360px; max-width: 85vw; height: 100dvh; 
+            background-color: rgba(255, 255, 255, 0.92); /* 살짝 투명하게 */
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); /* 아이폰 고급 블러 효과 */
+            padding: 20px 15px calc(20px + env(safe-area-inset-bottom)) 15px; 
+            box-sizing: border-box; z-index: 1001; overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            transition: all 0.3s ease; /* 부드러운 애니메이션 */
+            box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* 쫀득한 슬라이드 애니메이션 */
+            display: flex; flex-direction: column;
         }
-        
-        /* 🔥 패널 숨김 클래스 */
+
+        /* 숨김 상태 (오른쪽 화면 밖으로 100% 이동) */
         .dashboard-panel.hidden {
-            height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; border: none; opacity: 0;
+            transform: translateX(100%);
         }
 
-        /* 🔥 내 위치 버튼 (오른쪽 아래) */
-        .my-location-btn {
-            position: absolute; bottom: 12px; right: 12px; z-index: 1000;
-            width: 36px; height: 36px; background: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: none; font-size: 16px; cursor: pointer;
-        }
-        .my-location-dot { width: 10px; height: 10px; background-color: #3182ce; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
-
-        /* 🔥 패널 숨기기/보기 토글 버튼 (왼쪽 아래) */
+        /* 🔘 패널에 딱 붙어서 같이 움직이는 열기/닫기 손잡이 버튼 */
         .toggle-btn {
-            position: absolute; bottom: 12px; left: 12px; z-index: 1000;
-            width: 36px; height: 36px; background: white; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: 2px solid #3182ce; 
-            font-size: 14px; cursor: pointer;
+            position: absolute; top: 40px; left: -44px; z-index: 1002;
+            width: 44px; height: 48px; background: #3182ce; color: white; 
+            border-radius: 12px 0 0 12px; display: flex; align-items: center; justify-content: center;
+            box-shadow: -2px 2px 8px rgba(0,0,0,0.2); border: none; font-size: 18px; cursor: pointer;
         }
 
-        /* 입력 폼 스타일 (이전에 완성한 초슬림 UI 유지) */
-        .form-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        /* 📍 내 위치 버튼 (패널에 가려지지 않도록 왼쪽 아래로 이동) */
+        .my-location-btn {
+            position: absolute; bottom: 30px; left: 20px; z-index: 1000;
+            width: 44px; height: 44px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); border: none; font-size: 20px; cursor: pointer;
+        }
+        .my-location-dot { width: 12px; height: 12px; background-color: #3182ce; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
+
+        /* --- 입력 폼 스타일 (초슬림 UI 유지) --- */
+        .form-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex: none; }
         .form-row { display: flex; gap: 8px; align-items: flex-start; }
         .form-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-        label { font-size: 11px; font-weight: 700; margin-bottom: 3px; color: #4a5568; white-space: nowrap; }
+        
+        label { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: #4a5568; white-space: nowrap; }
         input[type="text"], input[type="date"], input[type="number"], textarea { 
-            width: 100%; height: 32px; padding: 0 6px; font-size: 13px; 
-            border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; 
+            width: 100%; height: 34px; padding: 0 8px; font-size: 13px; 
+            border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; 
             background-color: #f8fafc; color: #1a202c;
         }
         input:focus, textarea:focus { outline: none; border-color: #3182ce; background-color: white; }
-        textarea { height: 34px; padding: 8px 6px; resize: none; line-height: 1.2; }
+        textarea { height: 40px; padding: 8px; resize: none; line-height: 1.3; }
 
-        .checkbox-wrap { 
-            display: flex; gap: 12px; align-items: center; justify-content: flex-start; height: 32px; padding: 0 2px;
-        }
+        .checkbox-wrap { display: flex; gap: 12px; align-items: center; justify-content: flex-start; height: 34px; padding: 0 4px; }
         .checkbox-wrap label { font-size: 12px; font-weight: 600; color: #2d3748; display: flex; align-items: center; gap: 4px; cursor: pointer; margin: 0; }
-        .checkbox-wrap input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; margin: 0; }
+        .checkbox-wrap input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; margin: 0; }
 
-        .button-group { display: flex; gap: 8px; margin-top: 0; }
-        button.action-btn { height: 36px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .button-group { display: flex; gap: 8px; margin-top: 5px; flex: none; }
+        button.action-btn { height: 40px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .btn-add { background-color: #3182ce; color: white; flex: 2; }
         .btn-clear { background-color: #e2e8f0; color: #4a5568; flex: 0.5; }
 
-        .list-section { border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 10px; }
-        .list-title { font-size: 12px; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
-        #location-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 15px; }
+        /* --- 리스트 영역이 세로로 시원하게 늘어남 --- */
+        .list-section { border-top: 1px solid #e2e8f0; margin-top: 15px; padding-top: 12px; flex: 1; overflow-y: visible; }
+        .list-title { font-size: 13px; font-weight: 700; color: #2d3748; margin-bottom: 10px; }
+        #location-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
         
         .location-card {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px;
-            background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.02); cursor: pointer;
+            padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px;
+            background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.02); cursor: pointer;
         }
-        .card-main { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+        .card-main { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
         .card-header-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .card-title { font-size: 12px; font-weight: 700; color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .type-badge { display: inline-block; padding: 2px 4px; border-radius: 3px; font-size: 10px; font-weight: bold; }
+        .type-badge { display: inline-block; padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; }
         .badge-flight { background-color: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
         .badge-photo { background-color: #f0fff4; color: #2f855a; border: 1px solid #c6f6d5; }
         .badge-none { background-color: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
 
         .card-meta { font-size: 11px; color: #718096; }
-        .card-memo { font-size: 11px; color: #4a5568; background: #edf2f7; padding: 2px 5px; border-radius: 3px; margin-top: 1px; display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .card-memo { font-size: 11px; color: #4a5568; background: #edf2f7; padding: 3px 6px; border-radius: 4px; margin-top: 2px; display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         
-        .card-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-        .d-day-badge { font-size: 11px; font-weight: bold; padding: 4px 6px; border-radius: 4px; text-align: center; min-width: 38px; }
-        .btn-delete { width: 34px; height: 26px; background: #fed7d7; color: #e53e3e; border: none; border-radius: 4px; font-weight: bold; font-size: 10px; }
+        .card-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .d-day-badge { font-size: 11px; font-weight: bold; padding: 4px 6px; border-radius: 4px; text-align: center; min-width: 40px; }
+        .btn-delete { width: 36px; height: 28px; background: #fed7d7; color: #e53e3e; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; }
 
-        /* 💻 아이패드 프로 & 맥북 대응 */
-        @media (min-width: 768px) {
-            body { flex-direction: row; } 
-            #map { flex: 1; height: 100dvh; border-bottom: none; border-right: 1px solid #cbd5e1; }
-            .dashboard-panel { width: 340px; height: 100dvh; padding: 20px 15px; box-shadow: -4px 0 20px rgba(0,0,0,0.05); }
-            .dashboard-panel.hidden { width: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
-            .my-location-btn { bottom: 20px; right: 20px; }
-            .toggle-btn { bottom: 20px; left: 20px; }
-        }
+        /* 팝업 말풍선 디자인 다듬기 */
+        .leaflet-popup-content-wrapper { border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .leaflet-popup-content { margin: 14px; line-height: 1.6; }
     </style>
 </head>
 <body>
 
     <div id="map">
-        <button class="toggle-btn" id="toggle-btn" onclick="togglePanel()">🔽</button>
         <button class="my-location-btn" onclick="goToMyLocation()">📍</button>
     </div>
     
     <div class="dashboard-panel" id="dashboard-panel">
+        <button class="toggle-btn" id="toggle-btn" onclick="togglePanel()">▶️</button>
+
         <div class="form-container">
             <div class="form-row">
                 <div class="form-group">
@@ -127,6 +124,7 @@
                     <textarea id="bulk-coords" placeholder="좌표를 붙여넣으세요"></textarea>
                 </div>
             </div>
+            
             <div class="form-row">
                 <div class="form-group" style="flex: 2;">
                     <label>승인 종류</label>
@@ -140,6 +138,7 @@
                     <input type="number" id="radius" value="500">
                 </div>
             </div>
+            
             <div class="form-row">
                 <div class="form-group" style="padding-right: 4px;">
                     <label>신청 날짜</label>
@@ -150,6 +149,7 @@
                     <input type="date" id="expiry-date" style="border-width: 2px; border-color: #a0aec0;">
                 </div>
             </div>
+            
             <div class="form-row">
                 <div class="form-group">
                     <label>메모 (특이사항)</label>
@@ -159,7 +159,7 @@
         </div>
         
         <div class="button-group">
-            <button class="action-btn btn-add" onclick="addNewLocation()">✅ 정보 저장 및 확인</button>
+            <button class="action-btn btn-add" onclick="addNewLocation()">✅ 측면 서랍장 적용 완료</button>
             <button class="action-btn btn-clear" onclick="clearInputs()">비우기</button>
         </div>
 
@@ -184,7 +184,7 @@
             crs: L.CRS.EPSG3857, opacity: 0.4
         }).addTo(map);
 
-        // 🔥 패널 숨기기/보이기 자바스크립트 로직
+        // 🔥 패널 스르륵 열고 닫는 마법의 로직
         var isPanelHidden = false;
         function togglePanel() {
             isPanelHidden = !isPanelHidden;
@@ -193,13 +193,11 @@
             
             if(isPanelHidden) {
                 panel.classList.add('hidden');
-                btn.innerHTML = window.innerWidth >= 768 ? '◀️' : '🔼'; // 닫혔을 땐 위로(모바일) 또는 왼쪽(PC) 화살표
+                btn.innerHTML = '◀️'; // 닫혔을 땐 왼쪽을 가리켜서 당기게 유도
             } else {
                 panel.classList.remove('hidden');
-                btn.innerHTML = window.innerWidth >= 768 ? '▶️' : '🔽'; // 열렸을 땐 아래로(모바일) 또는 오른쪽(PC) 화살표
+                btn.innerHTML = '▶️'; // 열렸을 땐 오른쪽을 가리켜서 밀어넣게 유도
             }
-            // 창 크기가 변한 후 지도가 깨지지 않도록 리사이즈 업데이트
-            setTimeout(function() { map.invalidateSize(); }, 300);
         }
 
         var locations = JSON.parse(localStorage.getItem('drone_dashboard_locs')) || [];
@@ -317,10 +315,10 @@
                 
                 // 🔥 지도 클릭 시 나오는 말풍선 팝업 기능!
                 var popupContent = `
-                    <div style="font-family: sans-serif; font-size: 13px; line-height: 1.5; color: #1a202c;">
+                    <div style="font-family: sans-serif; font-size: 13px; color: #1a202c;">
                         <b style="color: #2b6cb0;">${loc.isFlight ? '✈️ 비행' : ''} ${loc.isPhoto ? '📷 촬영' : ''} 승인구역</b><br>
-                        <span style="color: #e53e3e; font-weight: bold;">⏳ 만료일: ${loc.expiry}</span><br>
-                        <span style="color: #4a5568;">📝 메모: ${loc.memo}</span>
+                        <span style="color: #e53e3e; font-weight: bold; display: inline-block; margin-top: 4px;">⏳ 만료일: ${loc.expiry}</span><br>
+                        <span style="color: #4a5568; display: inline-block; margin-top: 2px;">📝 메모: ${loc.memo}</span>
                     </div>
                 `;
                 circle.bindPopup(popupContent);
