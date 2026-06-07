@@ -4,47 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>드론 비행 통합 관리 대시보드</title>
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
-    
     <style>
-        html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; font-family: -apple-system, sans-serif; background-color: #f5f7fa; overflow: hidden; position: relative; }
-        #map { width: 100%; height: 100dvh; z-index: 1; position: absolute; top: 0; left: 0; }
-        .sidebar-wrapper { position: absolute; top: 0; right: 0; width: 360px; max-width: 90vw; height: 100dvh; z-index: 1001; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; font-family: -apple-system, sans-serif; background-color: #f5f7fa; overflow: hidden; }
+        #map { width: 100%; height: 100dvh; z-index: 1; position: absolute; }
+        .sidebar-wrapper { position: absolute; top: 0; right: 0; width: 360px; max-width: 90vw; height: 100dvh; z-index: 1001; transition: transform 0.35s; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
         .sidebar-wrapper.hidden { transform: translateX(100%); }
-        .toggle-btn { position: absolute; top: 40px; left: -44px; z-index: 1002; width: 44px; height: 48px; background: #3182ce; color: white; border-radius: 12px 0 0 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: -2px 2px 8px rgba(0,0,0,0.2); }
-        .dashboard-panel { width: 100%; height: 100%; padding: 20px; box-sizing: border-box; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .form-group { margin-bottom: 12px; }
-        label { font-size: 11px; font-weight: 700; color: #4a5568; margin-bottom: 4px; display: block; }
-        textarea, .flatpickr-input, input[type="text"], input[type="number"] { width: 100%; height: 34px; padding: 0 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: #f8fafc; font-size: 13px; }
-        textarea { height: 60px; padding: 8px; resize: none; }
-        .checkbox-wrap { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn-add { background-color: #3182ce; color: white; width: 100%; height: 45px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .location-card { border: 1px solid #e2e8f0; padding: 10px; margin-top: 10px; border-radius: 6px; background: white; }
-        .btn-delete { background: #fed7d7; color: #e53e3e; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; float: right; }
+        .toggle-btn { position: absolute; top: 40px; left: -44px; z-index: 1002; width: 44px; height: 48px; background: #3182ce; color: white; border-radius: 12px 0 0 12px; border: none; cursor: pointer; }
+        .dashboard-panel { width: 100%; height: 100%; padding: 20px; overflow-y: auto; }
+        .btn-add { background-color: #3182ce; color: white; width: 100%; height: 45px; border-radius: 8px; border: none; font-weight: bold; }
+        .location-card { border: 1px solid #e2e8f0; padding: 10px; margin-top: 10px; border-radius: 6px; }
+        .btn-delete { background: #fed7d7; color: #e53e3e; border: none; padding: 4px; float: right; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <div class="sidebar-wrapper" id="sidebar-wrapper">
-        <button class="toggle-btn" id="toggle-btn" onclick="togglePanel()">▶️</button>
+        <button class="toggle-btn" onclick="togglePanel()">▶️</button>
         <div class="dashboard-panel">
-            <div class="form-group"><label>좌표 붙여넣기</label><textarea id="bulk-coords"></textarea></div>
-            <div class="checkbox-wrap">
-                <label><input type="checkbox" id="chk-flight" checked> 비행</label>
-                <label><input type="checkbox" id="chk-photo" checked> 촬영</label>
-            </div>
-            <div class="form-group"><label>반경(m)</label><input type="number" id="radius" value="500"></div>
-            <div class="form-group"><label>신청 날짜</label><input type="text" id="app-date" class="flatpickr-input"></div>
-            <div class="form-group"><label>만료 날짜</label><input type="text" id="expiry-date" class="flatpickr-input"></div>
-            <div class="form-group"><label>메모</label><input type="text" id="memo"></div>
-            <button class="btn-add" onclick="addNewLocation()">✅ 등록 및 클라우드 저장</button>
+            <textarea id="bulk-coords" placeholder="좌표 입력 (위도, 경도)"></textarea>
+            <input type="text" id="app-date" placeholder="신청 날짜">
+            <input type="text" id="expiry-date" placeholder="만료 날짜">
+            <button class="btn-add" onclick="addNewLocation()">✅ 등록</button>
             <div id="location-list"></div>
         </div>
     </div>
@@ -58,46 +44,29 @@
         };
         firebase.initializeApp(firebaseConfig);
         var locationsRef = firebase.database().ref('drone_locations');
-        
+        var map = L.map('map').setView([37.5500, 126.9000], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
         flatpickr("#app-date", { locale: "ko", dateFormat: "Y-m-d" });
         flatpickr("#expiry-date", { locale: "ko", dateFormat: "Y-m-d" });
 
-        var map = L.map('map', { zoomControl: false }).setView([37.5500, 126.9000], 11);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        function togglePanel() {
-            var wrapper = document.getElementById('sidebar-wrapper');
-            wrapper.classList.toggle('hidden');
-            document.getElementById('toggle-btn').innerHTML = wrapper.classList.contains('hidden') ? '◀️' : '▶️';
-        }
-
         function addNewLocation() {
-            var coords = document.getElementById('bulk-coords').value;
-            locationsRef.push({
-                coords: coords,
-                isFlight: document.getElementById('chk-flight').checked,
-                isPhoto: document.getElementById('chk-photo').checked,
-                radius: document.getElementById('radius').value,
-                appDate: document.getElementById('app-date').value,
-                expiry: document.getElementById('expiry-date').value,
-                memo: document.getElementById('memo').value
-            });
+            var coords = document.getElementById('bulk-coords').value.split(',');
+            if(coords.length < 2) return alert("좌표 형식을 확인하세요!");
+            locationsRef.push({ lat: coords[0].trim(), lng: coords[1].trim(), expiry: document.getElementById('expiry-date').value });
             alert("저장 완료!");
         }
 
+        // 데이터가 들어오면 즉시 지도에 마커 찍기!
         locationsRef.on('value', function(snapshot) {
-            var listHtml = "";
+            map.eachLayer((layer) => { if (layer instanceof L.Marker) map.removeLayer(layer); });
             snapshot.forEach(child => {
                 var d = child.val();
-                listHtml += `<div class="location-card">
-                    <button class="btn-delete" onclick="deleteLoc('${child.key}')">삭제</button>
-                    <b>${d.expiry}</b><br>${d.memo}
-                </div>`;
+                L.marker([d.lat, d.lng]).addTo(map).bindPopup("만료: " + d.expiry);
             });
-            document.getElementById('location-list').innerHTML = listHtml;
         });
 
-        function deleteLoc(key) { locationsRef.child(key).remove(); }
+        function togglePanel() { document.getElementById('sidebar-wrapper').classList.toggle('hidden'); }
     </script>
 </body>
 </html>
