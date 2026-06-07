@@ -11,15 +11,17 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
     <style>
-        html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; font-family: -apple-system, sans-serif; background-color: #f5f7fa; overflow: hidden; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100dvh; font-family: -apple-system, sans-serif; background-color: #f5f7fa; overflow: hidden; position: relative; }
         #map { width: 100%; height: 100dvh; z-index: 1; position: absolute; }
         .sidebar-wrapper { position: absolute; top: 0; right: 0; width: 360px; max-width: 90vw; height: 100dvh; z-index: 1001; transition: transform 0.35s; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
         .sidebar-wrapper.hidden { transform: translateX(100%); }
-        .toggle-btn { position: absolute; top: 40px; left: -44px; z-index: 1002; width: 44px; height: 48px; background: #3182ce; color: white; border-radius: 12px 0 0 12px; border: none; cursor: pointer; }
-        .dashboard-panel { width: 100%; height: 100%; padding: 20px; overflow-y: auto; }
-        .btn-add { background-color: #3182ce; color: white; width: 100%; height: 45px; border-radius: 8px; border: none; font-weight: bold; }
-        .location-card { border: 1px solid #e2e8f0; padding: 10px; margin-top: 10px; border-radius: 6px; }
-        .btn-delete { background: #fed7d7; color: #e53e3e; border: none; padding: 4px; float: right; cursor: pointer; }
+        .toggle-btn { position: absolute; top: 40px; left: -44px; z-index: 1002; width: 44px; height: 48px; background: #3182ce; color: white; border-radius: 12px 0 0 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .dashboard-panel { width: 100%; height: 100%; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .form-group { margin-bottom: 12px; }
+        label { font-size: 11px; font-weight: 700; color: #4a5568; margin-bottom: 4px; display: block; }
+        textarea, .flatpickr-input, input { width: 100%; height: 34px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; }
+        .btn-add { background-color: #3182ce; color: white; width: 100%; height: 45px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .location-card { border: 1px solid #e2e8f0; padding: 10px; margin-top: 10px; border-radius: 6px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -27,46 +29,52 @@
     <div class="sidebar-wrapper" id="sidebar-wrapper">
         <button class="toggle-btn" onclick="togglePanel()">▶️</button>
         <div class="dashboard-panel">
-            <textarea id="bulk-coords" placeholder="좌표 입력 (위도, 경도)"></textarea>
-            <input type="text" id="app-date" placeholder="신청 날짜">
-            <input type="text" id="expiry-date" placeholder="만료 날짜">
-            <button class="btn-add" onclick="addNewLocation()">✅ 등록</button>
+            <div class="form-group"><label>좌표 붙여넣기</label><textarea id="bulk-coords" style="height:60px"></textarea></div>
+            <div class="form-group"><label>반경(m)</label><input type="number" id="radius" value="500"></div>
+            <div class="form-group"><label>신청 날짜</label><input type="text" id="app-date" class="flatpickr-input"></div>
+            <div class="form-group"><label>만료 날짜</label><input type="text" id="expiry-date" class="flatpickr-input"></div>
+            <div class="form-group"><label>메모</label><input type="text" id="memo"></div>
+            <button class="btn-add" onclick="addNewLocation()">✅ 등록 및 클라우드 저장</button>
             <div id="location-list"></div>
         </div>
     </div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var firebaseConfig = {
-            apiKey: "AIzaSyCQlcMwNfPicDN5AYLKZ9G0a7sc7Oc2d4E",
-            authDomain: "drone-map-3aae0.firebaseapp.com",
-            databaseURL: "https://drone-map-3aae0-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "drone-map-3aae0"
-        };
+        var firebaseConfig = { apiKey: "AIzaSyCQlcMwNfPicDN5AYLKZ9G0a7sc7Oc2d4E", authDomain: "drone-map-3aae0.firebaseapp.com", databaseURL: "https://drone-map-3aae0-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "drone-map-3aae0" };
         firebase.initializeApp(firebaseConfig);
         var locationsRef = firebase.database().ref('drone_locations');
+        
         var map = L.map('map').setView([37.5500, 126.9000], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         flatpickr("#app-date", { locale: "ko", dateFormat: "Y-m-d" });
         flatpickr("#expiry-date", { locale: "ko", dateFormat: "Y-m-d" });
 
+        function togglePanel() { document.getElementById('sidebar-wrapper').classList.toggle('hidden'); }
+
         function addNewLocation() {
-            var coords = document.getElementById('bulk-coords').value.split(',');
-            if(coords.length < 2) return alert("좌표 형식을 확인하세요!");
-            locationsRef.push({ lat: coords[0].trim(), lng: coords[1].trim(), expiry: document.getElementById('expiry-date').value });
+            locationsRef.push({
+                coords: document.getElementById('bulk-coords').value,
+                radius: document.getElementById('radius').value,
+                appDate: document.getElementById('app-date').value,
+                expiry: document.getElementById('expiry-date').value,
+                memo: document.getElementById('memo').value
+            });
             alert("저장 완료!");
         }
 
-        // 데이터가 들어오면 즉시 지도에 마커 찍기!
         locationsRef.on('value', function(snapshot) {
-            map.eachLayer((layer) => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+            var listHtml = "";
+            map.eachLayer((l) => { if (l instanceof L.Marker) map.removeLayer(l); });
             snapshot.forEach(child => {
                 var d = child.val();
-                L.marker([d.lat, d.lng]).addTo(map).bindPopup("만료: " + d.expiry);
+                listHtml += `<div class="location-card"><b>만료: ${d.expiry}</b><br>${d.memo}</div>`;
+                // 간단한 좌표 추출 예시 (실제 좌표가 첫 줄에 있다고 가정 시)
+                var latlng = d.coords.match(/\d+\.\d+/g);
+                if(latlng) L.marker([latlng[0], latlng[1]]).addTo(map).bindPopup(d.memo);
             });
+            document.getElementById('location-list').innerHTML = listHtml;
         });
-
-        function togglePanel() { document.getElementById('sidebar-wrapper').classList.toggle('hidden'); }
     </script>
 </body>
 </html>
